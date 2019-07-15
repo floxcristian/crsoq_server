@@ -1,0 +1,13 @@
+@startuml
+left to right direction
+
+Estudiante --> (CU10 - Ver Cursos)
+
+(CU10 - Ver Cursos) -.> (CU11 - Ver Clases) : <<extend>>
+(CU10 - Ver Cursos) -.> (CU12 - Ver Preguntas) : <<extend>>
+(CU10 - Ver Cursos) -.> (CU13 - Ver Actividades) : <<extend>>
+(CU10 - Ver Cursos) -.> (CU14 - Ver Participación) : <<extend>>
+
+(CU11 - Ver Clases) -.> (CU15 - Ingresar a Sesión\nde Preguntas) : <<include>>
+
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+
+Administrador --> (CU01 - Gestionar Usuarios)
+Administrador --> (CU05 - Gestionar Asignaturas)
+Administrador --> (CU09 - Gestionar Períodos\nAcadémicos)
+
+(CU01 - Gestionar Usuarios) -.> (CU02 - Crear Usuario) : include
+(CU01 - Gestionar Usuarios) -.> (CU03 - Modificar Usuario) : include
+(CU01 - Gestionar Usuarios) -.> (CU04 - Eliminar Usuario) : include
+
+(CU05 - Gestionar Asignaturas) -.> (CU06 - Crear Asignatura) : include
+(CU05 - Gestionar Asignaturas) -.> (CU07 - Modificar Asignatura) : include
+(CU05 - Gestionar Asignaturas) -.> (CU08- Eliminar Asignatura) : include
+
+(CU09 - Gestionar Períodos\nAcadémicos) -.> (CU10 - Crear Período\nAcadémico) : include
+(CU09 - Gestionar Períodos\nAcadémicos) -.> (CU11 - Modificar Período\nAcadémico) : include
+(CU09 - Gestionar Períodos\nAcadémicos) -.> (CU12 - Eliminar Período\nAcadémico) : include
+
+@enduml
