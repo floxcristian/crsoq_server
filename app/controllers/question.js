@@ -1,15 +1,11 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 const _f_exts = require('../config/file_exts');
 const _file = require('../services/file');
 
-// ----------------------------------------
 // Init Upload Service
-// ----------------------------------------
 const upload = _file.uploadFile('images/questions', _f_exts.IMAGE_EXTS, 5, 'image');
 
 // ----------------------------------------
@@ -19,9 +15,7 @@ async function getQuestions(req, res, next) {
 
     try {
 
-        // Query Params
         //const search = req.query.search;
-
         const id_user = req.query.id_user; // Obligatorio por el momento
         const id_subject = req.query.id_subject || null;
         const id_category = req.query.id_category || null;

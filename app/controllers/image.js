@@ -1,16 +1,12 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const fs = require('fs');
 const path = require('path');
 
-
-// ----------------------------------------
 // Get Roles
-// ----------------------------------------
-async function getImages(req, res, next) {
+const getImages = async (req, res, next) => {
+
     try {
         const category_type = req.params.categoryType;
         const image_file = req.params.imageFile;
@@ -30,9 +26,6 @@ async function getImages(req, res, next) {
     }
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getImages
 }

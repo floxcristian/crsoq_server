@@ -1,6 +1,6 @@
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+'use strict'
+
+// Load modules
 const express = require('express');
 //const fs = require('fs');
 //const path = require('path');
@@ -17,9 +17,6 @@ api.get('/', (req, res)=>{
 })
 api.get('/images/:categoryType/:imageFile', imageController.getImages);
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = api;
 
 

@@ -42,7 +42,7 @@ const database = {
         user: 'postgres', 
         host: 'localhost', 
         database: 'crsoq_db', 
-        password: 'admin', 
+        password: '0812', 
         port: 5432
     }
 };
