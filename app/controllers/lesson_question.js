@@ -354,7 +354,7 @@ const updateLessonQuestion = async (req, res, next) => {
                     AND (status = 2 OR status = 3)
                 ) THEN TRUE ELSE FALSE END AS any_question_started`;
             const values = [id_class, id_question];
-            const any_question_started = (await pool.query(text, values)).rows[0].any_question_started;
+            const { any_question_started } = (await pool.query(text, values)).rows[0];
 
             if (any_question_started) return res.send(null); // Si ya hay una pregunta iniciada enviar null para que no se inicie la clase
 
@@ -410,7 +410,7 @@ const updateLessonQuestion = async (req, res, next) => {
 
         // Obtiene datos de la pregunta
         const text3 = `
-            SELECT id_question, difficulty, description 
+            SELECT id_question, difficulty, description, image 
             FROM questions
             WHERE id_question = $1`;
         const values3 = [id_question];
@@ -504,9 +504,7 @@ function formatWorkspaceArray(array_questions, id_lesson) {
 }
 
 
-// ----------------------------------------
-// Delete Question
-// ----------------------------------------
+// Delete a question
 const deleteClassQuestion = async (req, res, next) => {
 
     try {
@@ -621,14 +619,14 @@ const getCourseQuestions = async (req, res, next) => {
         AND ($5::int IS NULL OR t1.id_subcategory = $5)
         AND ($6::int IS NULL OR t1.difficulty = $6)`;
         const values2 = [id_user, id_subject, id_course, id_category, id_subcategory, difficulty];
-        const total_items = (await pool.query(text2, values2)).rows[0].count;
+        const { count } = (await pool.query(text2, values2)).rows[0];
 
         res.send({
             info: {
-                total_pages: Math.ceil(total_items / page_size),
+                total_pages: Math.ceil(count / page_size),
                 page: page,
                 page_size: page_size,
-                total_items: parseInt(total_items),
+                total_items: parseInt(count),
             },
             items: rows
         });

@@ -7,11 +7,10 @@ const express = require('express');
 //const { checkToken } = require('../../middlewares/authenticated');
 const imageController = require('../../controllers')._image;
 
+//
 const api = express.Router();
 
-// ----------------------------------------
-// Routes and Controllers
-// ----------------------------------------
+// Routes and controllers
 api.get('/', (req, res)=>{
     console.log("nicol!!!!!");
 })

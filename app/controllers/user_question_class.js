@@ -41,7 +41,8 @@ async function getStudents(req, res, next) {
     }
 }
 
-const setLoserStudent= async (req, res, next) => {
+// Establece un estudiante perdedor
+const setLoserStudent = async (req, res, next) => {
 
     try {
 
@@ -50,14 +51,14 @@ const setLoserStudent= async (req, res, next) => {
             id_class,
             id_question
         } = req.body;
+
         const { id_user } = loser_student;
 
-        // Modifica el array global.
-        let asistentes = socket.getStudentsInClassroom(id_class);
-        let index_perdedor = asistentes.findIndex(asistente => asistente.id_user == id_user);
-        if (index_perdedor >= 0) asistentes[index_perdedor].participation_status = 4;
+        let asistentes = socket.getStudentsInClassroom(id_class); // Obtiene a los asistentes de la clase
+        let index_perdedor = asistentes.findIndex(asistente => asistente.id_user == id_user); // Busca al perdedor entre los asistentes
+        if (index_perdedor >= 0) asistentes[index_perdedor].participation_status = 4; // Actualiza el estado del estudiante a 'perdedor' (si lo encuentra)
 
-
+        console.log("nopoe: ", socket.getStudentsInClassroom(id_class));
         // Inserta al estudiante perdedor en la base de datos
         const text = `
             INSERT INTO user_question_class(id_user, id_class, id_question, status) 
@@ -71,6 +72,7 @@ const setLoserStudent= async (req, res, next) => {
         io.in(id_class + 'play-question-section')
             .emit('studentHasEnteredToTheClassroom', {
                 type: 2,
+                detail: 'UPDATE_STUDENT_STATUS',
                 id_user: id_user,
                 update_student_status: 4, // status 'perdedor'
                 update_question_status: 3 // status 'seleccionando un estudiante'

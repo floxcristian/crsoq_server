@@ -5,13 +5,11 @@ const pool = require('../database');
 const _f_exts = require('../config/file_exts');
 const _file = require('../services/file');
 
-// Init Upload Service
+// Init upload service
 const upload = _file.uploadFile('images/questions', _f_exts.IMAGE_EXTS, 5, 'image');
 
-// ----------------------------------------
-// Get Questions
-// ----------------------------------------
-async function getQuestions(req, res, next) {
+// Get questions
+const getQuestions = async (req, res, next) => {
 
     try {
 
@@ -75,7 +73,7 @@ async function getQuestions(req, res, next) {
         const values2 = [difficulty, id_subcategory, id_category, id_user, id_subject];
         const total_items = (await pool.query(text2, values2)).rows[0].count;
 
-        // Envía la respuesta al cliente
+
         return res.send({
             info: {
                 total_pages: Math.ceil(total_items / page_size),
@@ -84,7 +82,7 @@ async function getQuestions(req, res, next) {
                 total_items: parseInt(total_items),
             },
             items: rows
-        })
+        });
 
     } catch (error) {
         next({
@@ -93,30 +91,8 @@ async function getQuestions(req, res, next) {
     }
 }
 
-
-/*
-async function getQuestionOptions(req, res, next) {
-    try {
-        const id_category = req.query.id_category; // Obligatorio por ahora 
-
-        // Obtiene las preguntas
-        const text = 'SELECT id_subcategory, name FROM subcategories WHERE WHERE id_category = $1 ORDER BY name';
-        const values = [id_category];
-        const { rows } = await pool.query(text, values);
-
-        // Envía la Respuesta
-        res.json(rows);
-    } catch {
-        next({ error });
-    }
-
-}
-*/
-
-// ----------------------------------------
-// Create Question
-// ----------------------------------------
-async function createQuestion(req, res, next) {
+// Create a question
+const createQuestion = async (req, res, next) => {
 
     upload(req, res, async (error) => {
 
@@ -124,20 +100,22 @@ async function createQuestion(req, res, next) {
         const file_path = req.file !== undefined ? req.file.path : undefined;
 
         try {
-            // Body Params
+           
             const {
                 id_subcategory,
                 description,
                 difficulty
             } = req.body;
 
-            const text = 'INSERT INTO questions(id_subcategory, description, difficulty, image) VALUES($1, $2, $3, $4) RETURNING *';
+            const text = `
+                INSERT INTO questions(id_subcategory, description, difficulty, image) 
+                VALUES($1, $2, $3, $4) 
+                RETURNING *`;
             const values = [id_subcategory, description, difficulty, file_path];
             const {
                 rows
             } = await pool.query(text, values);
 
-            // Envía la respuesta al cliente
             res.status(201).send(rows[0]);
         } catch (error) {
             if (file_path) _file.deleteFile(file_path);
@@ -149,10 +127,8 @@ async function createQuestion(req, res, next) {
 
 }
 
-// ----------------------------------------
-// Update Question
-// ----------------------------------------
-async function updateQuestion(req, res, next) {
+// Update a question
+const updateQuestion = async (req, res, next) => {
 
     upload(req, res, async (error) => {
 
@@ -160,7 +136,6 @@ async function updateQuestion(req, res, next) {
         const file_path = req.file !== undefined ? req.file.path : undefined;
 
         try {
-            // Body Params
             const {
                 id_subcategory,
                 description,
@@ -172,7 +147,10 @@ async function updateQuestion(req, res, next) {
             const id_question = req.params.questionId;
 
             // Consulta para asegurarme de que existe la pregunta y para obtener la ruta de la imagen actual
-            const text1 = 'SELECT id_question, image FROM questions WHERE id_question = $1';
+            const text1 = `
+                SELECT id_question, image 
+                FROM questions 
+                WHERE id_question = $1`;
             const values1 = [id_question];
             const res1 = (await pool.query(text1, values1)).rows;
 
@@ -194,8 +172,7 @@ async function updateQuestion(req, res, next) {
             const values2 = [id_subcategory, description, difficulty, file_path ? file_path : image, shared, id_question];
             const res2 = await (pool.query(text2, values2)).rows;
 
-            // Envío la respuesta al cliente
-            res.json(res2)
+            res.json(res2);
 
         } catch (error) {
             // Si ocurrio algun error elimino la imagen recien cargada al servidor
@@ -207,14 +184,15 @@ async function updateQuestion(req, res, next) {
     });
 }
 
-// ----------------------------------------
-// Delete Question
-// ----------------------------------------
-async function deleteQuestion(req, res, next) {
+// Delete a question
+const deleteQuestion = async (req, res, next) => {
+    
     try {
         const id_question = req.params.questionId;
 
-        const text = 'DELETE FROM questions WHERE id_question = $1';
+        const text = `
+            DELETE FROM questions 
+            WHERE id_question = $1`;
         const values = [id_question]
         await pool.query(text, values);
 
@@ -227,10 +205,6 @@ async function deleteQuestion(req, res, next) {
     }
 }
 
-
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getQuestions,
     createQuestion,
