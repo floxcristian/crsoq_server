@@ -1,5 +1,7 @@
+'use strict'
 
-// Load Modules
+//> poner nombre de controlador
+// Load modules
 const user = require('./user');
 const user_question_class = require('./user_question_class');
 const color = require('./color');
@@ -19,8 +21,6 @@ const _activityParticipation = require('./activity_participation');
 const _image = require('./image');
 const _workspace = require('./workspace');
 
-
-// Export Modules
 module.exports = {
     _activity,
     _activityParticipation,

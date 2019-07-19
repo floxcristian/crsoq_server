@@ -8,15 +8,14 @@ const _lessonController = require('../../controllers')._lesson;
 
 var api = express.Router();
 
-// Routes and controllers
 //api.get('/enter_to_question_room');
 //api.get('enter_to_questuib');
 // Routes and controllers
 api.get('/select_options', _lessonController.getLessonOptions); //Opciones de selector
-api.get('/:classId', _lessonController.getClassById);
+api.get('/:id_class', _lessonController.getClassById);
 api.get('/', _lessonController.getLessons);
 api.post('/', _lessonController.createLesson);
-api.put('/:lessonId', _lessonController.updateLesson);
-api.delete('/:lessonId', _lessonController.deleteLesson);
+api.put('/:id_class', _lessonController.updateLesson);
+api.delete('/:id_class', _lessonController.deleteLesson);
 
 module.exports = api;

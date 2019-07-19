@@ -1,17 +1,14 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 
-// ----------------------------------------
-// Get Categories
-// ----------------------------------------
-async function getSubcategories(req, res, next) {
+// Obtiene subcategorías
+const getSubcategories = async (req, res, next) => {
     try {
-        // Query Params
-        const id_user = req.query.id_user; // Obligatorio
+        const {
+            id_user
+        } = req.query;
         const id_subject = req.query.id_subject || null;
         const id_category = req.query.id_category || null;
         const page_size = req.query.page_size || 20;
@@ -34,7 +31,9 @@ async function getSubcategories(req, res, next) {
         LIMIT $4
         OFFSET $5`;
         const values = [id_user, id_subject, id_category, page_size, from];
-        const { rows } = await pool.query(text, values);
+        const {
+            rows
+        } = await pool.query(text, values);
 
         // Obtiene la cantidad total de clases (de acuerdo a los parámetros de filtro) ARREGLAR WOM!!
         const text2 = `
@@ -56,32 +55,41 @@ async function getSubcategories(req, res, next) {
             items: rows
         })
     } catch (error) {
-        next({ error });
+        next({
+            error
+        });
     }
 }
 
 // ----------------------------------------
 // Get Categories as Select Options
 // ----------------------------------------
-async function getSubcategoryOptions(req, res, next) {
+const getSubcategoryOptions = async (req, res, next) => {
     try {
-        // Query Params
-        //const id_user = req.query.id_user; // Obligatorio por ahora    
-        const id_category = req.query.id_category; // Obligatorio por ahora  
+        const {
+            id_category
+        } = req.query;
 
         // Obtiene las categorías
-        const text = 'SELECT id_subcategory, name FROM subcategories WHERE id_category = $1 ORDER BY name';
+        const text = `
+            SELECT id_subcategory, name 
+            FROM subcategories 
+            WHERE id_category = $1 
+            ORDER BY name`;
         const values = [id_category];
-        const { rows } = await pool.query(text, values);
-
-        // Envía la respuesta al cliente
+        const {
+            rows
+        } = await pool.query(text, values);
         res.json(rows);
     } catch (error) {
-        next({ error });
+        next({
+            error
+        });
     }
 }
 
-async function createSubcategory(req, res, next) {
+// Crea una subcategoría
+const createSubcategory = async (req, res, next) => {
 
     try {
         const {
@@ -94,54 +102,60 @@ async function createSubcategory(req, res, next) {
             const {
                 rows
             } = await pool.query('INSERT INTO subcategories(id_category, name) VALUES($1, $2)', [id_category, name]);
-            res.status(201).send(rows[0])
+            res.status(201).send(rows[0]);
         } else {
             res.status(400).json({
                 message: 'send all necessary fields'
-            })
+            });
         }
     } catch (error) {
-        next({ error });
+        next({
+            error
+        });
     }
 }
 
-// ----------------------------------------
-// Update Category
-// ----------------------------------------
-async function updateSubcategory(req, res, next) {
+// Actualiza una subcategoría
+const updateSubcategory = async (req, res, next) => {
     try {
-        const id_subcategory = req.params.subcategoryId;
+        const {
+            id_subcategory
+        } = req.params;
         const {
             id_category,
             name
         } = req.body;
 
         // Comprobar si existe el registro antes??
-        const text2 = 'UPDATE subcategories SET id_category = $1, name = $2, updated_at = NOW() WHERE id_subcategory = $3';
-        const values2 = [id_category, name, id_subcategory];
-        const res2 = (await pool.query(text2, values2)).rows[0];
+        const text = 'UPDATE subcategories SET id_category = $1, name = $2, updated_at = NOW() WHERE id_subcategory = $3';
+        const values = [id_category, name, id_subcategory];
+        const {
+            rows
+        } = await pool.query(text, values);
 
-        res.json(res2)
+        res.json(rows[0]);
 
     } catch (error) {
-        next({ error });
+        next({
+            error
+        });
     }
 }
 
-// ----------------------------------------
-// Delete Subcategory
-// ----------------------------------------
-async function deleteSubcategory(req, res, next) {
+// Elimina una subcategoría
+const deleteSubcategory = async (req, res, next) => {
     try {
-        const id_subcategory = req.params.subcategoryId;
-
-        const text = 'DELETE FROM subcategories WHERE id_subcategory = $1';
+        const { id_subcategory } = req.params;
+        const text = `
+            DELETE FROM subcategories 
+            WHERE id_subcategory = $1`;
         const values = [id_subcategory]
-        const { rows } = await pool.query(text, values);
+        await pool.query(text, values);
         res.sendStatus(204);
-
     } catch (error) {
-        next({ error });
+        next({
+            error
+        });
     }
 }
 
@@ -149,7 +163,7 @@ async function deleteSubcategory(req, res, next) {
 async function getLastSubcategories(req, res, next) {
 
     try {
-        const id_user = req.query.id_user; 
+        const { id_user } = req.query;
         const page_size = req.query.page_size || null;
 
         const text = `SELECT su.id_subject, su.name AS subject, c.id_category, c.name AS category, s.id_subcategory, s.name, s.created_at, s.updated_at 
@@ -176,9 +190,6 @@ async function getLastSubcategories(req, res, next) {
     }
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getSubcategories,
     getSubcategoryOptions,

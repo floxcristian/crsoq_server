@@ -10,7 +10,7 @@ var socket = require('../../index');
 // Obtiene las preguntas que ya han sido agregadas a la clase.
 // + Enviar atributo winners: true/false
 // ----------------------------------------
-async function getLessonQuestions(req, res, next) {
+const getLessonQuestions = async (req, res, next) => {
 
     try {
         // Query Params
@@ -185,12 +185,12 @@ async function getAllQuestionsForLesson(req, res, next) {
     }
 }
 
-async function getQuestionByCourse(req, res, next) {
+const getQuestionByCourse = async (req, res, next) => {
+
     try {
-
-
-        const id_course = req.params.courseId;
-        console.log("BY COURSE: ", id_course)
+        const {
+            id_course
+        } = req.params;
         const id_category = req.query.id_category || null;
         const id_subcategory = req.query.id_subcategory || null;
         const difficulty = req.query.difficulty || null;
@@ -243,14 +243,16 @@ async function getQuestionByCourse(req, res, next) {
             AND ($3::int IS NULL OR s.id_subcategory = $3)
             AND ($4::int IS NULL OR q.difficulty = $4)`
         const values2 = [id_course, id_category, id_subcategory, difficulty];
-        const total_items = (await pool.query(text2, values2)).rows[0].count;
+        const {
+            count
+        } = (await pool.query(text2, values2)).rows[0];
 
         res.send({
             info: {
-                total_pages: Math.ceil(total_items / page_size),
+                total_pages: Math.ceil(count / page_size),
                 page: page,
                 page_size: page_size,
-                total_items: parseInt(total_items),
+                total_items: parseInt(count),
             },
             items: rows
         });
@@ -268,7 +270,6 @@ async function updateLessonQuestions(req, res, next) {
     const client = await pool.pool.connect();
 
     try {
-        // Body Params
         const {
             id_lesson,
             add_questions,
@@ -329,8 +330,11 @@ const updateLessonQuestion = async (req, res, next) => {
         const {
             status
         } = req.body;
-        const id_class = req.params.classId; //>
-        const id_question = req.params.questionId;  //>
+        const {
+            id_class,
+            id_question
+        } = req.params;
+       
 
         if (status == 1) { // Reinicia una pregunta (status 'no iniciada')
 
@@ -356,7 +360,9 @@ const updateLessonQuestion = async (req, res, next) => {
                     AND (status = 2 OR status = 3)
                 ) THEN TRUE ELSE FALSE END AS any_question_started`;
             const values = [id_class, id_question];
-            const { any_question_started } = (await pool.query(text, values)).rows[0];
+            const {
+                any_question_started
+            } = (await pool.query(text, values)).rows[0];
 
             // Si ya hay una pregunta iniciada en la clase envia 'null' para que no se inicie la pregunta
             if (any_question_started) return res.send(null);
@@ -403,7 +409,7 @@ const updateLessonQuestion = async (req, res, next) => {
 
         let io = socket.getSocket(); // Obtiene el socket
 
-        if (status != 1) {    
+        if (status != 1) {
             // Emite la pregunta a los estudiantes que esten en la sección de juego de la clase
             io.in(id_class + 'play-question-section').emit('playingTheClassQuestion', {
                 question
@@ -486,13 +492,15 @@ function formatWorkspaceArray(array_questions, id_lesson) {
 }
 
 
-// Delete a question
+// Elimina una pregunta
 const deleteClassQuestion = async (req, res, next) => {
 
     try {
+        const {
+            id_class,
+            id_question
+        } = req.params;
 
-        const id_class = req.params.classId;
-        const id_question = req.params.questionId;
 
         const text = `
             DELETE FROM class_question 
@@ -601,7 +609,9 @@ const getCourseQuestions = async (req, res, next) => {
         AND ($5::int IS NULL OR t1.id_subcategory = $5)
         AND ($6::int IS NULL OR t1.difficulty = $6)`;
         const values2 = [id_user, id_subject, id_course, id_category, id_subcategory, difficulty];
-        const { count } = (await pool.query(text2, values2)).rows[0];
+        const {
+            count
+        } = (await pool.query(text2, values2)).rows[0];
 
         res.send({
             info: {

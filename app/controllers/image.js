@@ -8,8 +8,7 @@ const path = require('path');
 const getImages = async (req, res, next) => {
 
     try {
-        const category_type = req.params.categoryType;
-        const image_file = req.params.imageFile;
+        const { category_type, image_file } = req.params;
         let file_path = path.resolve(__dirname, `../..${req.originalUrl}`); //'uploads/images/questions/1542488957846.jpg};
 
         // Comprueba si existe la imagen

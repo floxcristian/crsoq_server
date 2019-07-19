@@ -7,14 +7,13 @@ const express = require('express');
 //const { checkToken } = require('../../middlewares/authenticated');
 const imageController = require('../../controllers')._image;
 
-//
 const api = express.Router();
 
 // Routes and controllers
 api.get('/', (req, res)=>{
     console.log("nicol!!!!!");
 })
-api.get('/images/:categoryType/:imageFile', imageController.getImages);
+api.get('/images/:category_type/:image_file', imageController.getImages);
 
 module.exports = api;
 

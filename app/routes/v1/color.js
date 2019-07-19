@@ -1,24 +1,17 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const express = require('express');
 const colorController = require('../../controllers').color;
 
 var api = express.Router();
 
-// ----------------------------------------
-// Routes and Controllers
-// ----------------------------------------
+// Routes and controllers
 api.get('/', colorController.getColors);
-api.get('/:userId', colorController.getColorsByUserId);
+api.get('/:id_user', colorController.getColorsByUserId);
 api.post('/create', colorController.createColor);
-api.put('/update/:colorId', colorController.updateColor);
-api.delete('/delete/:colorId', colorController.deleteColor);
+api.put('/update/:id_color', colorController.updateColor);
+api.delete('/delete/:id_color', colorController.deleteColor);
 //api.get('/:userId/:page?', colorController.getColorsByUserId);
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = api;

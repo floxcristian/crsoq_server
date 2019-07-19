@@ -1,48 +1,51 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 
-// ----------------------------------------
-// Get Colors
-// ----------------------------------------
-async function getColors(req, res, next) {
+// Obtiene los colores
+const getColors = async (req, res, next) => {
     try {
-        const text = 'SELECT id_color, name, hexadecimal FROM colors ORDER BY name ASC';
+        const text = `
+            SELECT id_color, name, hexadecimal 
+            FROM colors 
+            ORDER BY name ASC`;
         const {
             rows
         } = await pool.query(text);
-        res.json(rows)
+        res.json(rows);
     } catch (error) {
         next({ error });
     }
 }
 
-// ----------------------------------------
-// Get Colors by User ID
-// ----------------------------------------
-async function getColorsByUserId(req, res) {
+// Obtiene los colores por 'id_user'
+const getColorsByUserId = async (req, res, next) => {
 
     try {
-        const id_user = req.params.userId
+        const { id_user } = req.params;
 
-        const text = 'SELECT id_color, name, haxadecimal FROM colors WHERE id_color IN (SELECT id_color FROM user_subject_color WHERE id_user = $1)';
+        const text = `
+            SELECT id_color, name, haxadecimal 
+            FROM colors 
+            WHERE id_color 
+            IN (
+                SELECT id_color 
+                FROM user_subject_color 
+                WHERE id_user = $1
+            )`;
         const values = [id_user];
         const {
             rows
         } = await pool.query(text, values);
-        res.json(rows)
+        res.json(rows);
     } catch (error) {
         next({ error });
     }
 }
 
-// ----------------------------------------
-// Create a Color
-// ----------------------------------------
-async function createColor(req, res) {
+// Crea un color
+const createColor = async (req, res, next) => {
 
     try {
         const {
@@ -63,29 +66,25 @@ async function createColor(req, res) {
             const {
                 rows
             } = await pool.query(text, values);
-            return res.json({
-                success: true,
+            res.json({
                 message: 'successfully created color',
                 color: rows[0]
-            })
+            });
 
         } else {
             res.status(400).json({
-                success: false,
                 message: 'send all necessary fields'
-            })
+            });
         }
     } catch (error) {
         next({ error });
     }
 }
 
-// ----------------------------------------
-// Update a Color
-// ----------------------------------------
-async function updateColor(req, res) {
+// Actualiza un color
+const updateColor = async (req, res, next) => {
     try {
-        const id_color = req.params.colorId;
+        const { id_color } = req.params;
         const {
             name,
             hexadecimal
@@ -106,7 +105,6 @@ async function updateColor(req, res) {
 
             if (rows.length > 0) {
                 res.json({
-                    success: true,
                     message: 'successfully updated color',
                     color: rows[0]
                 });
@@ -126,18 +124,16 @@ async function updateColor(req, res) {
     }
 }
 
-// ----------------------------------------
-// Delete a Color
-// ----------------------------------------
-async function deleteColor(req, res) {
+// Elimina un color
+const deleteColor = async (req, res, next) => {
     try {
-        const id_color = req.params.colorId;
+        const { id_color } = req.params;
 
-        const text = 'DELETE FROM colors WHERE id_color = $1';
+        const text = `
+            DELETE FROM colors 
+            WHERE id_color = $1`;
         const values = [id_color];
-        const {
-            rows
-        } = await pool.query(text, values);
+        await pool.query(text, values);
         res.sendStatus(204);
     } catch (error) {
         next({ error });
@@ -185,9 +181,6 @@ function checkColorExists(name, hexadecimal) {
 
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getColors,
     getColorsByUserId,

@@ -1,17 +1,16 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 
-async function getModules(req, res, next) {
+// Obtiene módulos
+const getModules = async (req, res, next) => {
+
     try {
         const {
             id_course,
         } = req.query;
 
-        console.log(`id_course: ${id_course}`);
         if (id_course) {
             const text = `SELECT id_module, id_course, name, position, created_at, updated_at FROM modules WHERE id_course = $1`;
             const values = [id_course];
@@ -81,19 +80,16 @@ async function createModule(req, res) {
     }
 }
 
-// ----------------------------------------
-// Elimina un Modulo
-// ----------------------------------------
-async function deleteModule(req, res) {
+// Elimina un módulo
+const deleteModule = async (req, res, next) => {
     try {
-        // Params
-        const id_module = req.params.moduleId;
+        const { id_module } = req.params;
 
-        const text = 'DELETE FROM modules WHERE id_module = $1';
+        const text = `
+            DELETE FROM modules 
+            WHERE id_module = $1`;
         const values = [id_module];
-        const {
-            rows
-        } = await pool.query(text, values);
+        await pool.query(text, values);
         res.sendStatus(204);
 
     } catch (error) {
@@ -102,31 +98,27 @@ async function deleteModule(req, res) {
 }
 
 
-// ----------------------------------------
-// Actualiza un Modulo
-// ----------------------------------------
-async function updateModule(req, res) {
+// Actualiza un módulo
+const updateModule = async (req, res, next) => {
     try {
-        const id_module = req.params.moduleId;
-        // Body Params
+        const { id_module } = req.params;
         const {
             name
         } = req.body;
 
-        const text = 'UPDATE modules SET name = $1 WHERE id_module = $2 RETURNING id_module, id_course, name, position, created_at, updated_at';
+        const text = `
+            UPDATE modules 
+            SET name = $1 
+            WHERE id_module = $2 
+            RETURNING id_module, id_course, name, position, created_at, updated_at`;
         const values = [name, id_module];
         const { rows } = await pool.query(text, values);
-
-        // Envía la Respuesta
-        res.json(rows[0])
+        res.json(rows[0]);
     } catch (error) {
         next({ error });
     }
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getModules,
     getModuleOptions,

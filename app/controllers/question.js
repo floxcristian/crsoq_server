@@ -8,7 +8,7 @@ const _file = require('../services/file');
 // Init upload service
 const upload = _file.uploadFile('images/questions', _f_exts.IMAGE_EXTS, 5, 'image');
 
-// Get questions
+// Obtiene preguntas
 const getQuestions = async (req, res, next) => {
 
     try {
@@ -91,7 +91,7 @@ const getQuestions = async (req, res, next) => {
     }
 }
 
-// Create a question
+// Crea una pregunta
 const createQuestion = async (req, res, next) => {
 
     upload(req, res, async (error) => {
@@ -143,8 +143,8 @@ const updateQuestion = async (req, res, next) => {
                 image,
                 shared
             } = req.body;
-            // Params
-            const id_question = req.params.questionId;
+            
+            const { id_question } = req.params;
 
             // Consulta para asegurarme de que existe la pregunta y para obtener la ruta de la imagen actual
             const text1 = `
@@ -188,7 +188,7 @@ const updateQuestion = async (req, res, next) => {
 const deleteQuestion = async (req, res, next) => {
     
     try {
-        const id_question = req.params.questionId;
+        const { id_question } = req.params;
 
         const text = `
             DELETE FROM questions 

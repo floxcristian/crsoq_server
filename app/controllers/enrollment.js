@@ -1,31 +1,30 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 var socket = require('../../index');
 
-async function getEnrollmentsByUserId(req, res, next) {
+// Obtiene las matrículas
+const getEnrollmentsByUserId = async (req, res, next) => {
 
     try {
-        // Query Params
-        const id_user = req.params.userId;
+        const { id_user } = req.params;
 
-        const text1 = `SELECT cu.id_user, cu.id_course, cu.enrolled_at, cu.active, s.id_subject, s.name AS subject, ca.id_calendar, ca.year, ca.semester
-        FROM course_user AS cu
-        INNER JOIN courses AS c
-        ON c.id_course = cu.id_course
-        INNER JOIN subjects AS s
-        ON s.id_subject = c.id_subject
-        INNER JOIN calendars AS ca
-        ON c.id_calendar = ca.id_calendar
-        WHERE cu.id_user = $1
-        AND cu.active = TRUE`
-        const values1 = [id_user];
-        const res1 = (await pool.query(text1, values1)).rows;
+        const text = `
+            SELECT cu.id_user, cu.id_course, cu.enrolled_at, cu.active, s.id_subject, s.name AS subject, ca.id_calendar, ca.year, ca.semester
+            FROM course_user AS cu
+            INNER JOIN courses AS c
+            ON c.id_course = cu.id_course
+            INNER JOIN subjects AS s
+            ON s.id_subject = c.id_subject
+            INNER JOIN calendars AS ca
+            ON c.id_calendar = ca.id_calendar
+            WHERE cu.id_user = $1
+            AND cu.active = TRUE`;
+        const values = [id_user];
+        const { rows } = await pool.query(text, values);
 
-        res.json(res1)
+        res.json(rows);
 
     } catch (error) {
         next({
@@ -35,19 +34,19 @@ async function getEnrollmentsByUserId(req, res, next) {
 
 }
 
-async function createEnrollment(req, res, next) {
+const createEnrollment = async (req, res, next) => {
 
     try {
-        // Body Params
         const {
             id_user,
             id_course
         } = req.body;
 
-        console.log("create enrollment...: ", id_user, id_course);
-
         // Query para crear la matrícula
-        const text = `INSERT INTO course_user(id_user, id_course) VALUES($1, $2) RETURNING enrolled_at`;
+        const text = `
+            INSERT INTO course_user(id_user, id_course) 
+            VALUES($1, $2) 
+            RETURNING enrolled_at`;
         const values = [id_user, id_course];
         const enrollment_created = (await pool.query(text, values)).rows[0];
         //console.log("enrollment created: ", enrollment_created);
@@ -56,16 +55,17 @@ async function createEnrollment(req, res, next) {
         // Query para obtener toda la data de la matrícula y estudiante que será mandada por socket
         // {id_user, user_name, id_course, course_name, id_subject, subject_name}
         // + Se repite en delete
-        const text2 = `SELECT u.id_user, u.name, s.id_subject, s.name AS subject
-        FROM users AS u 
-        INNER JOIN course_user AS cu 
-        ON cu.id_user = u.id_user 
-        INNER JOIN courses AS c 
-        ON cu.id_course = c.id_course 
-        INNER JOIN subjects AS s
-        ON c.id_subject = s.id_subject
-        WHERE cu.id_user = $1 
-        AND cu.id_course = $2`;
+        const text2 = `
+            SELECT u.id_user, u.name, s.id_subject, s.name AS subject
+            FROM users AS u 
+            INNER JOIN course_user AS cu 
+            ON cu.id_user = u.id_user 
+            INNER JOIN courses AS c 
+            ON cu.id_course = c.id_course 
+            INNER JOIN subjects AS s
+            ON c.id_subject = s.id_subject
+            WHERE cu.id_user = $1 
+            AND cu.id_course = $2`;
         const values2 = [id_user, id_course];
         const {
             rows
@@ -91,8 +91,6 @@ async function createEnrollment(req, res, next) {
         // ++ O Emito evento a todos los usuarios que pertenezcan al curso
         //io.in(user_enrolled).emit('studentEnrolled', rows[0]);
         
-        
-        // Envía respuesta al cliente
         res.send({});
 
     } catch (error) {
@@ -103,11 +101,10 @@ async function createEnrollment(req, res, next) {
 }
 
 // Inactiva la matrícula (no la elimina) 
-async function updateEnrollment(req, res, next) {
+const updateEnrollment = async (req, res, next) => {
     try {
-        const id_course = req.params.courseId;
-        const id_user = req.params.userId;
-        const active = req.body.active;
+        const { id_course, id_user } = req.params;
+        const { active } = req.body;
 
         const text = `
         UPDATE course_user 
@@ -147,22 +144,21 @@ async function updateEnrollment(req, res, next) {
     }
 }
 
-async function getEnrollmentsByCourseId(req, res, next) {
+const getEnrollmentsByCourseId = async (req, res, next) => {
     try {
-        const id_course = req.params.courseId;
-        console.log("getEnrollmentsByCourseId: ", id_course);
+        const { id_course } = req.params;
 
-        const text1 = `SELECT cs.enrolled_at, cs.active, u.id_user, u.name, u.last_name, u.middle_name, u.document, u.email, u.phone, u.username 
-        FROM course_user AS cs 
-        INNER JOIN users AS u 
-        ON cs.id_user = u.id_user 
-        WHERE id_course = $1`;
-        const values1 = [id_course];
+        const text = `
+            SELECT cs.enrolled_at, cs.active, u.id_user, u.name, u.last_name, u.middle_name, u.document, u.email, u.phone, u.username 
+            FROM course_user AS cs 
+            INNER JOIN users AS u 
+            ON cs.id_user = u.id_user 
+            WHERE id_course = $1`;
+        const values = [id_course];
         const {
             rows
-        } = (await pool.query(text1, values1));
+        } = await pool.query(text, values);
 
-        console.log("ENROLLMENTS: ", rows);
         //const res2 = (await pool.query(text2, values2)).rows[0];
         //console.log(res1)
         res.json({
@@ -183,16 +179,17 @@ async function getCountEnrollments() {
 
 }
 
-async function deleteEnrollment(req, res, next) {
+const deleteEnrollment = async (req, res, next) => {
+
     try {
+        const { id_course, id_user } = req.params;
 
-        const id_course = req.params.courseId;
-        const id_user = req.params.userId;
-
-        const text = 'DELETE FROM course_user WHERE id_course = $1 AND id_user = $2';
+        const text = `
+            DELETE FROM course_user 
+            WHERE id_course = $1 
+            AND id_user = $2`;
         const values = [id_course, id_user];
         await pool.query(text, values);
-
 
         // Revisar que parámetros necesito realmente
         const text2 = `SELECT s.id_subject, s.name AS subject
@@ -235,11 +232,8 @@ async function getDataEnrollment() {
 }
 
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
-module.exports = {
 
+module.exports = {
     getEnrollmentsByCourseId,
     getEnrollmentsByUserId,
     createEnrollment,

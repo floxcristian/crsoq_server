@@ -7,7 +7,6 @@ const validation = require('../../validations/auth.validation');
 const { checkToken } = require('../../middlewares/authenticated');
 const validate = require('../../middlewares/validation-result');
 
-// Define express app
 var api = express.Router();
 
 // Routes and controllers
@@ -20,7 +19,6 @@ api.post('/renew_token', checkToken, authController.renewToken);
 //api.post('/forgot', );
 //api.post('/reset', );
 
-// Export modules
 module.exports = api;
 
 

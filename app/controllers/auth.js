@@ -10,7 +10,7 @@ const index = require('../../index');
 function rejectRefreshToken(req, res, next) {
 
     try {
-        const refresh_token = req.body.refresh_token;
+        const { refresh_token } = req.body;
         index.deleteRefreshToken(refresh_token);
         res.sendStatus(204);
     } catch (error) {
@@ -87,7 +87,7 @@ async function login(req, res, next) {
 }
 
 // Renueva la sesión (recibe token)
-async function updateSession(req, res, next) {
+const updateSession = async (req, res, next) => {
     try {
 
         const {
@@ -115,7 +115,8 @@ async function updateSession(req, res, next) {
 
 // Recibe el 'refresh token' y el 'email'
 // 'An email is required to generate an access token.'
-async function renewToken(req, res, next) {
+const renewToken = async (req, res, next) => {
+    
     try {
 
         const {
@@ -195,7 +196,7 @@ async function renewToken(req, res, next) {
     }
 }
 
-function generateAccessToken(user) {
+const generateAccessToken = (user) => {
 
     // En algunos blogs usan: 'email y username', en otros un 'id_client'.
     return jwt.sign({
@@ -213,7 +214,7 @@ const generateAccessToken = data => {
 */
 
 
-function generateRefreshToken(id_user) {
+const generateRefreshToken = (id_user) => {
 
     return jwt.sign({
         id_user: id_user
@@ -283,9 +284,6 @@ function updateRefreshToken(refresh_token, email) {
 
 }
 
-
-
-// Export modules
 module.exports = {
     login,
     updateSession,

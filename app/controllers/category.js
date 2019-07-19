@@ -1,14 +1,8 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 
-//FRAGMENTOS DE CONSULTA
-const CATEGORIES = 'SELECT id_category, id_user, id_subject, name, created_at, updated_at, count(*) OVER() AS count FROM categories';
-const CATEGORIES_OPTIONS = `SELECT id_category, name FROM categories`;
-const PAGINATION = ' ORDER BY id_category LIMIT $1 OFFSET $2';
 
 // ----------------------------------------
 // Get Categories
@@ -94,13 +88,12 @@ const PAGINATION = ' ORDER BY id_category LIMIT $1 OFFSET $2';
 */
 
 // Si necesito las últimas 5 del profe debo enviar page_size=5 y solo el user_id
-// ----------------------------------------
-// Get Categories
-// ----------------------------------------
-async function getCategories(req, res, next) {
+// Obtiene las categorías
+const getCategories = async (req, res, next) => {
+    
     try {
-        // Query Params
-        const id_user = req.query.id_user; // Obligatorio
+       
+        const { id_user } = req.query;
         const id_subject = req.query.id_subject || null;
         const page_size = req.query.page_size || 20;
         const page = req.query.page || 1;
@@ -130,15 +123,14 @@ async function getCategories(req, res, next) {
         WHERE id_user = $1
         AND ($2::int IS NULL OR id_subject = $2)`;
         const values2 = [id_user, id_subject];
-        const total_items = (await pool.query(text2, values2)).rows[0].count;
+        const { count } = (await pool.query(text2, values2)).rows[0].count;
 
-        // Envía la respuesta al cliente
         res.json({
             info: {
-                total_pages: Math.ceil(total_items / page_size),
+                total_pages: Math.ceil(count / page_size),
                 page: page,
                 page_size: page_size,
-                total_items: parseInt(total_items),
+                total_items: parseInt(count),
             },
             items: rows
         });
@@ -153,20 +145,23 @@ async function getCategories(req, res, next) {
 // ----------------------------------------
 // Get Categories as Select Options
 // ----------------------------------------
-async function getCategoryOptions(req, res, next) {
-    try {
-        // Query Params
-        const id_user = req.query.id_user; // Obligatorio por ahora    
-        const id_subject = req.query.id_subject; // Obligatorio por ahora  
+const getCategoryOptions = async (req, res, next) => {
+    
+    try { 
+        const { id_user, id_subject } = req.query; 
 
         // Obtiene las categorías
-        const text = 'SELECT id_category, name FROM categories WHERE id_user = $1 AND id_subject = $2 ORDER BY name';
+        const text = `
+            SELECT id_category, name 
+            FROM categories 
+            WHERE id_user = $1 
+            AND id_subject = $2 
+            ORDER BY name`;
         const values = [id_user, id_subject];
         const {
             rows
         } = await pool.query(text, values);
 
-        // Envía la respuesta al cliente
         res.json(rows);
     } catch (error) {
         next({
@@ -176,10 +171,8 @@ async function getCategoryOptions(req, res, next) {
 }
 
 
-// ----------------------------------------
-// Create Category
-// ----------------------------------------
-async function createCategory(req, res, next) {
+// Crea una categoría
+const createCategory = async (req, res, next) => {
 
     try {
         const {
@@ -190,18 +183,19 @@ async function createCategory(req, res, next) {
 
         if (id_user && id_subject && name) {
 
-            const text = 'INSERT INTO categories(id_user, id_subject, name) VALUES($1, $2, $3)';
+            const text = `
+                INSERT INTO categories(id_user, id_subject, name) 
+                VALUES($1, $2, $3)`;
             const values = [id_user, id_subject, name]
             const {
                 rows
             } = await pool.query(text, values);
 
-            // Envía la respuesta al cliente
-            res.status(201).send(rows[0])
+            res.status(201).send(rows[0]);
         } else {
             res.status(400).json({
                 message: 'send all necessary fields'
-            })
+            });
         }
     } catch (error) {
         next({
@@ -210,12 +204,11 @@ async function createCategory(req, res, next) {
     }
 }
 
-// ----------------------------------------
-// Update Category
-// ----------------------------------------
-async function updateCategory(req, res, next) {
+// Actualiza una categoría
+const updateCategory = async (req, res, next) => {
+    
     try {
-        const id_category = req.params.categoryId;
+        const { id_category } = req.params;
         const {
             id_subject,
             name
@@ -237,17 +230,15 @@ async function updateCategory(req, res, next) {
 }
 
 
-// ----------------------------------------
-// Delete Category
-// ----------------------------------------
-async function deleteCategory(req, res, next) {
+// Elimina una categoría
+const deleteCategory = async (req, res, next) => {
     try {
-        const id_category = req.params.categoryId;
-        const text = 'DELETE FROM categories WHERE id_category = $1';
+        const { id_category } = req.params;
+        const text = `
+            DELETE FROM categories 
+            WHERE id_category = $1`;
         const values = [id_category];
         await pool.query(text, values);
-
-        // Envía la respuesta al cliente
         res.sendStatus(204);
     } catch (error) {
         next({
@@ -258,7 +249,7 @@ async function deleteCategory(req, res, next) {
 
 async function getLastCategories(req, res, next) {
     try {
-        const id_user = req.query.id_user; 
+        const { id_user } = req.query; 
         const page_size = req.query.page_size || null;
 
         const text = `SELECT s.id_subject, s.name AS subject, c.id_category, c.name, c.created_at, c.updated_at 
@@ -283,9 +274,6 @@ async function getLastCategories(req, res, next) {
     }
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getCategories,
     getCategoryOptions,

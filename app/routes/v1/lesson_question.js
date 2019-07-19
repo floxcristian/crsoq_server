@@ -10,13 +10,13 @@ var api = express.Router();
 api.get('/', _lessonQuestionController.getLessonQuestions);
 api.get('/all', _lessonQuestionController.getAllQuestionsForLesson);
 api.get('/course_questions', _lessonQuestionController.getCourseQuestions);
-api.get('/course/:courseId', _lessonQuestionController.getQuestionByCourse);
+api.get('/course/:id_course', _lessonQuestionController.getQuestionByCourse);
 //api.get('/select_options', _questionController.getQuestionOptions); //Opciones para el Selector
 //api.get('/:userId', colorController.getColorsByUserId);
 api.post('/', _lessonQuestionController.updateLessonQuestions); // Agrega varias preguntas a la biblioteca
-api.post('/:classId/:questionId', _lessonQuestionController.updateLessonQuestion); // Actualiza una pregunta
+api.post('/:id_class/:id_question', _lessonQuestionController.updateLessonQuestion); // Actualiza una pregunta
 //api.put('/:questionId', _questionController.updateQuestion);
-api.delete('/:classId/:questionId', _lessonQuestionController.deleteClassQuestion);
+api.delete('/:id_class/:id_question', _lessonQuestionController.deleteClassQuestion);
 //api.get('/count', categoryController.countCategory);
 
 module.exports = api;

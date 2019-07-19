@@ -4,7 +4,7 @@
 const pool = require('../database');
 const socket = require('../../index');
 
-// Crear actividad
+// Crea una actividad
 const createActivity = async (req, res, next) => {
 
     try {
@@ -49,7 +49,7 @@ const getActivities = async (req, res, next) => {
 
     try {
 
-        const id_course = req.query.id_course;
+        const { id_course } = req.query;
         const mode = req.query.mode || null;
         const status = req.query.status || null;
         const page_size = req.query.page_size || 20;
@@ -122,8 +122,8 @@ const updateActivity = async (req, res, next) => {
 
         const client = await pool.pool.connect();
 
-        const id_activity = parseInt(req.params.activityId);
-        const id_class = req.body.id_lesson;
+        const id_activity = parseInt(req.params.id_activity);
+        const id_class = req.body.id_lesson; //>
         const {
             name,
             mode,
@@ -205,14 +205,11 @@ const updateActivity = async (req, res, next) => {
 
 }
 
-
-async function getCountActivities() {
-
-}
-
+// 
 const getStudentsByActivityID = async (req, res, next) => {
+
     try {
-        const id_activity = req.query.id_activity;
+        const { id_activity } = req.query;
 
         const text = `
             SELECT u.id_user, u.document, u.name, u.last_name, u.middle_name, au.status 
@@ -233,11 +230,12 @@ const getStudentsByActivityID = async (req, res, next) => {
     }
 }
 
+// Elimina una actividad
 const deleteActivity = async (req, res, next) => {
 
     try {
 
-        const id_activity = req.params.activityId;
+        const { id_activity } = req.params;
 
         const text = `
             DELETE FROM activities 

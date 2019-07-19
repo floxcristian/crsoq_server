@@ -1,11 +1,9 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 
-async function getEnrollments(req, res) {
+async function getEnrollments(req, res, next) {
 
     try {
         const id_course = req.params.id_course;
@@ -25,29 +23,26 @@ async function getEnrollments(req, res) {
     }
 }
 
-// ----------------------------------------
-// Update Lesson
-// ----------------------------------------
-async function updateActivityParticipation(req, res, next) {
+// Actualiza el estado de participación de un estudiante en una actividad
+const updateActivityParticipation = async (req, res, next) => {
 
     try {
-        const id_activity = req.params.activityId;
-        const id_user = req.params.userId;
 
+        const { id_activity, id_user } = req.params;
         const {
             status
         } = req.body;
 
         // Comprobar si existe el registro antes??
-        const text2 = `
-        UPDATE activity_user 
-        SET status = $1 
-        WHERE id_activity = $2 
-        AND id_user = $3`;
-        const values2 = [status, id_activity, id_user];
-        const res2 = (await pool.query(text2, values2)).rows[0];
+        const text = `
+            UPDATE activity_user 
+            SET status = $1 
+            WHERE id_activity = $2 
+            AND id_user = $3`;
+        const values = [status, id_activity, id_user];
+        const response = (await pool.query(text, values)).rows[0];
 
-        res.json(res2)
+        res.json(response);
 
     } catch (error) {
         next({
@@ -58,11 +53,11 @@ async function updateActivityParticipation(req, res, next) {
 
 
 const updateActivityParticipations = async (req, res, next) => {
-    console.log("UPDATE ACTIVITY PARTICIPATIONS");
+    
     try {
         
-        const id_activity = parseInt(req.params.activityId);
-        const array_participation = req.body.array_participation;
+        const id_activity = parseInt(req.params.id_activity);
+        const { array_participation } = req.body;
         // array_participation: {id_user, status}
         // Actualizar múltiples registros en una query: https://stackoverflow.com/questions/37048772/update-multiple-rows-from-multiple-params-in-nodejs-pg
         // Actualizar múltiples registros pasando un array de objetos: https://stackoverflow.com/questions/37059187/convert-object-array-to-array-compatible-for-nodejs-pg-unnest
@@ -72,7 +67,6 @@ const updateActivityParticipations = async (req, res, next) => {
             id_activity
         }));
         // [ {id_user, id_activity, status} ]
-
         
         const text = `
             UPDATE activity_user AS au 
@@ -87,7 +81,7 @@ const updateActivityParticipations = async (req, res, next) => {
             WHERE au.id_activity = s.id_activity 
             AND au.id_user = s.id_user`;
         const values = [JSON.stringify(array_participation)];
-        const res2 = (await pool.query(text, values)).rows;
+        await pool.query(text, values);
         res.json({});
 
     } catch (error) {

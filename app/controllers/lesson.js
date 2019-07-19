@@ -68,7 +68,7 @@ const getClassById = async (req, res, next) => {
 
     try {
 
-        const id_class = req.params.classId;
+        const { id_class } = req.params;
 
         // Obtiene las clases
         const text = `
@@ -169,7 +169,7 @@ const updateLesson = async (req, res, next) => {
 
     try {
 
-        const id_class = req.params.lessonId;
+        const { id_class } = req.params;
         const {
             id_module,
             description,
@@ -288,7 +288,7 @@ const deleteLesson = async (req, res, next) => {
 
     try {
 
-        const id_class = req.params.lessonId;
+        const { id_class } = req.params;
 
         // Elimina la clase en base al 'id_class'
         const text = `

@@ -1,14 +1,9 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const express = require('express');
-const status = require('http-status');
 
-// ----------------------------------------
 // Load routes
-// ----------------------------------------
 const auth = require('./auth');
 const colors = require('./color');
 const users = require('./user');
@@ -28,9 +23,7 @@ const activityParticipation = require('./activity_participation');
 const images = require('./image');
 const user_question_class = require('./user_question_class');
 
-// ----------------------------------------
 // Define express app
-// ----------------------------------------
 const app = express();
 
 // ----------------------------------------
