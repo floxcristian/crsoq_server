@@ -319,7 +319,7 @@ async function updateLessonQuestions(req, res, next) {
 }
 
 
-// Actualiza el estado de la pregunta de una clase
+// Actualiza el estado de una pregunta de una clase
 // + Estados: 1: no iniciada, 2: activa, 3: detenida, 4: finalizada
 // * Estados de pregunta de clase: 1: no iniciada, 2: activa, 3: detenida, 4: estudiante respondiendo , 5: finalizada
 const updateLessonQuestion = async (req, res, next) => {
@@ -329,22 +329,24 @@ const updateLessonQuestion = async (req, res, next) => {
         const {
             status
         } = req.body;
-        const id_class = req.params.classId;
-        const id_question = req.params.questionId;
+        const id_class = req.params.classId; //>
+        const id_question = req.params.questionId;  //>
 
-        if (status == 1) { // Si se desea reiniciar una pregunta (volver al estado 'no iniciada')
+        if (status == 1) { // Reinicia una pregunta (status 'no iniciada')
 
-            // Eliminar los registros de participación de la pregunta de clase
+            // Elimina registros de participación de la pregunta
             const text = `
                 DELETE FROM user_question_class
                 WHERE id_question = $1
                 AND id_class = $2`;
             const values = [id_question, id_class];
             await pool.query(text, values);
+            // Elimina participantes de la variable 'participants_of_a_question'
+            socket.setParticipants(id_class, []);
 
-        } else if (status == 2) { // Si se desea iniciar una pregunta
+        } else if (status == 2) { // Inicia una pregunta (status 'iniciada')
 
-            // Verificar que no halla otra pregunta iniciada o detenida en la clase
+            // Verifica que no halla otra pregunta 'iniciada' o 'detenida' en la clase
             const text = `
                 SELECT CASE WHEN EXISTS (
                     SELECT status 
@@ -356,34 +358,16 @@ const updateLessonQuestion = async (req, res, next) => {
             const values = [id_class, id_question];
             const { any_question_started } = (await pool.query(text, values)).rows[0];
 
-            if (any_question_started) return res.send(null); // Si ya hay una pregunta iniciada enviar null para que no se inicie la clase
+            // Si ya hay una pregunta iniciada en la clase envia 'null' para que no se inicie la pregunta
+            if (any_question_started) return res.send(null);
 
-        } else if (status == 4) { // Si se desea finalizar una pregunta
+        } else if (status == 5) { // Finaliza una pregunta (status 'finalizada')
 
-            // Vacíar el array de participantes 'student_participants_of_a_question[id_class]' de la pregunta en juego
-            socket.setStudentParticipants({
-                id_class: id_class,
-                data: null
-            });
+            // Elimina participantes de la variable 'participants_of_a_question'
+            socket.setParticipants(id_class, []);
+            // Actualiza el estado de los estudiantes en clase 'students_in_classrooms' a 'en espera' (status 1) 
+            socket.resetStudentsInClassroomStatus(id_class);
 
-            // Modificar el estado de los estudiantes en clase 'students_in_classrooms[id_class]' a 'en espera' (status 1) 
-            // + Crear una función seteadora en socket?..
-            let students_in_class = socket.getStudentsInClassroom(id_class);
-
-            if (students_in_class && students_in_class.length > 0) {
-                students_in_class.forEach(student => {
-                    student.participation_status = 1;
-                });
-            }
-
-            // Emite nuevo array de participantes a estudiantes
-            // + Creo que no es necesario, lo puedo hacer desde el mismo cliente y dando un tiempo para que el
-            //   estudiante alcance a ver quien gano.
-            // let io = socket.getSocket();
-            // io.in(id_class + 'play-question-section')
-            //     .emit('studentHasEnteredToTheClassroom',
-            //         socket.getStudentsInClassroom(id_class)
-            //     );
         }
 
         // + Verificar que el estado de la pregunta cambia antes de actualizar?
@@ -415,13 +399,17 @@ const updateLessonQuestion = async (req, res, next) => {
             WHERE id_question = $1`;
         const values3 = [id_question];
         const question = (await pool.query(text3, values3)).rows[0];
-        question.status = status; // Asigna el estado actual de la pregunta al objeto
+        question.status = status; // Establece el estado actual de la pregunta
 
         let io = socket.getSocket(); // Obtiene el socket
-        // Emite la pregunta a los estudiantes que esten en la sección de juego de la clase
-        io.in(id_class + 'play-question-section').emit('playingTheClassQuestion', {
-            question
-        });
+
+        if (status != 1) {    
+            // Emite la pregunta a los estudiantes que esten en la sección de juego de la clase
+            io.in(id_class + 'play-question-section').emit('playingTheClassQuestion', {
+                question
+            });
+        }
+
 
         // Si se ha iniciado una pregunta y el estado actualizado es diferente al estado original 
         if (status == 2 && original_status != status) {
@@ -444,16 +432,10 @@ const updateLessonQuestion = async (req, res, next) => {
                 subject
             } = (await pool.query(text, values)).rows[0];
 
-            // Emite notificación a estudiantes del curso indicando que se ha iniciado una pregunta
+            // Emiter: indican a estudiantes del curso que se inició una pregunta
             io.in(id_course + 'students').emit('classQuestionStarted', {
                 id_course,
                 subject
-            });
-
-            console.log(`${colors.cyan.bold('[SOCKET]'.padStart(10))} emit(classQuestionStarted) to:`);
-            io.in(id_course + 'students').clients((error, clients) => {
-                if (error) throw error;
-                console.table(clients);
             });
 
         }
