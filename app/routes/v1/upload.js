@@ -8,71 +8,81 @@ const path = require('path');
 const pool = require('../../database');
 
 const app = express();
-//DEFAULT OPTIONS
+
 app.use(file_upload());
 
-//uploads/images/questions/1542488957846.jpg
+// example: 'uploads/images/questions/1542488957846.jpg'
+//> Necesario??
 app.get('/uploads/images', (req, res) => {
 
 })
 
-// Sube una imágen
+// Upload an image file
+// example: 'upload/users', 'upload/questions'
 app.put('/upload/:file_type/:id_file_type', (req, res, next) => {
 
-    const { file_type, id_file_type } = req.params; // users/questions
-    if (!req.files) {
-        return res.status(400).json({
-            message: 'no se ha seleccionado ningún archivo'
-        });
-    }
+    try {
+        const {
+            file_type,
+            id_file_type
+        } = req.params;
 
-    //VERIFICA SI ES UNA RUTA VÁLIDA PARA SUBIR IMAGEN
-    let valid_file_types = ['users', 'questions'];
-    if (valid_file_types.indexOf(file_type) < 0) {
-        return res.status(400).json({
-            message: `the allowed file types are ${valid_file_types.join(', ')} but your file type is ${file_type}`
-        })
-    }
-
-    // Obtiene la extensión del archivo
-    let file = req.files.file;
-    let file_separation = file.name.split('.');
-    let file_extension = file_separation[file_separation.length - 1];
-    let valid_file_extensions = ['png', 'jpg', 'gif', 'jpeg'];
-
-    //ENVIA ERROR SI LA EXTENSIÓN NO ES SOPORTADA
-    if (valid_file_extensions.indexOf(file_extension) < 0) {
-        return res.status(400).json({
-            message: `the allowed file extensions are ${valid_file_extensions.join(', ')} but your file extesion is ${file_extension}`
-        })
-    }
-
-    // Cambia el nombre del archivo
-    let file_name = `${id_file_type}-${new Date().getMilliseconds()}.${file_extension}`
-
-    //GUARDAR EL ARCHIVO
-    file.mv(`uploads/${file_type}/${file_name}`, (error) => {
-        if (error) {
-            return res.status(500).json({
-                error
+        if (!req.files) {
+            return res.status(400).json({
+                message: 'no se ha seleccionado ningún archivo'
             });
         }
 
-        //CONSULTAR SI EXISTE EL ID
-        if (file_type == 'users') {
-            userImage(id_file_type, res, file_name);
-        } else {
-            questionImage(id_file_type, res, file_name);
+        const valid_file_types = ['users', 'questions'];
+        const valid_file_extensions = ['png', 'jpg', 'gif', 'jpeg'];
+
+        // Responde con error si el tipo de imagen no es válido
+        if (valid_file_types.indexOf(file_type) < 0) {
+            return res.status(400).json({
+                message: `the allowed file types are ${valid_file_types.join(', ')} and your file type is ${file_type}.`
+            });
         }
 
-    })
+        let { file } = req.files; // Obtiene el archivo de imagen
+        let file_separation = file.name.split('.'); // Separa la extensión del nombre
+        let file_extension = file_separation[file_separation.length - 1]; // Obtiene la extensión del archivo
+        // Responde con error si la extensión no es soportada
+        if (valid_file_extensions.indexOf(file_extension) < 0) {
+            return res.status(400).json({
+                message: `the allowed file extensions are ${valid_file_extensions.join(', ')} and your file extesion is ${file_extension}.`
+            });
+        }
+
+        // Cambia el nombre del archivo evitando que se repita con el de otra imagen
+        let file_name = `${id_file_type}-${new Date().getMilliseconds()}.${file_extension}`;
+
+        // Guarda el archivo
+        file.mv(`uploads/${file_type}/${file_name}`, (error) => {
+            if (error) {
+                return res.status(500).json({
+                    error
+                });
+            }
+            
+            // Responde en base al tipo de imagen 
+            if (file_type == 'users') userImage(id_file_type, res, file_name);
+            else if(file_type == 'questions') questionImage(id_file_type, res, file_name);
+        });
+
+    } catch (error) {
+        next({
+            error
+        });
+    }
+
 });
 
+// Actualiza la imagen del usuario
 const userImage = async (id_user, res, file_name) => {
     try {
-        // Consulta si el usuario existe
+        // Verifica si el usuario existe
         const text = `
-            SELECT * 
+            SELECT id_user 
             FROM users 
             WHERE id_user = $1`;
         const values = [id_user];
@@ -88,17 +98,16 @@ const userImage = async (id_user, res, file_name) => {
             });
         }
 
-        // Borra la imagen anterior si existe el usuario
-        deleteFile(rows[0].profile_image, 'users')
+        // Elimina la imagen antigua del usuario
+        deleteFile(rows[0].profile_image, 'users');
+        // Actualiza la nueva imagen
         const text2 = `
             UPDATE users 
             SET profile_image = $1 
             WHERE id_user = $2`;
         const values2 = [file_name, id_user];
         await pool.query(text2, values2);
-        res.json({
-            message: 'imagen cargada en db correctamente'
-        });
+        res.json();
 
     } catch (error) {
         next({
@@ -107,11 +116,12 @@ const userImage = async (id_user, res, file_name) => {
     }
 }
 
+// Actualiza la imagen de la pregunta
 const questionImage = async (id_question, res, file_name) => {
     try {
-        // Consulta si la pregunta existe
+        // Verifica si la pregunta existe
         const text = `
-            SELECT * 
+            SELECT id_question 
             FROM questions 
             WHERE id_question = $1`;
         const values = [id_question];
@@ -127,17 +137,16 @@ const questionImage = async (id_question, res, file_name) => {
             });
         }
 
-        //
+        // Elimina la imagen antigua de la pregunta
         deleteFile(rows[0].image, 'questions');
+        // Actualiza la nueva imagen
         const text2 = `
             UPDATE questions 
             SET image = $1 
             WHERE id_question = $2`;
         const values2 = [file_name, id_question];
         await pool.query(text2, values2);
-        res.json({
-            message: 'imagen cargada en db correctamente'
-        });
+        res.json();
 
     } catch (error) {
         next({
@@ -146,12 +155,12 @@ const questionImage = async (id_question, res, file_name) => {
     }
 }
 
-
+// Elimina un archivo del servidor
 const deleteFile = (image_name, file_type) => {
+    // Obtiene el path de la imagen en el servidor
     const image_path = path.resolve(__dirname, `../../../uploads/${file_type}/${image_name}`);
-    if (fs.existsSync(image_path)) {
-        fs.unlinkSync(image_path)
-    }
+    //
+    if (fs.existsSync(image_path)) fs.unlinkSync(image_path)
 }
 
 module.exports = app;

@@ -8,19 +8,20 @@ const socket = require('../../index');
 const createActivity = async (req, res, next) => {
 
     try {
-
         const {
             id_lesson,
             name,
             mode
         } = req.body;
 
+        // Crea una actividad
         const text = `
             INSERT INTO activities(id_class, name, mode) 
             VALUES($1, $2, $3)`;
         const values = [id_lesson, name, mode];
         await pool.query(text, values);
 
+        // Obtiene el 'id_course' en base al 'id_class'
         const text2 = `
             SELECT m.id_course 
             FROM modules AS m
@@ -31,7 +32,8 @@ const createActivity = async (req, res, next) => {
         const { id_course } = (await pool.query(text2, values2)).rows[0];
 
         let io = socket.getSocket(); // Obtiene el websocket
-        // Emite evento a la 'socket room' ${id_course+'class-section-room'}`
+
+        // Emite evento a la 'room' ${id_course+'class-section-room'}`
         io.in(id_course + 'activity-section-room').emit('activityCreated');
 
         //res.sendStatus(201); // Error: Unexpected token JSON at position 0
@@ -48,14 +50,13 @@ const createActivity = async (req, res, next) => {
 const getActivities = async (req, res, next) => {
 
     try {
-
         const { id_course } = req.query;
         const mode = req.query.mode || null;
         const status = req.query.status || null;
         const page_size = req.query.page_size || 20;
         const page = req.query.page || 1;
 
-        const from = (page - 1) * page_size; // Calcula el from a partir de los params 'page' y 'page_size'
+        const from = (page - 1) * page_size; // Calcula el 'from' a partir de los params 'page' y 'page_size'
 
         // Obtiene las Actividades por ID Curso (Parámetros de Filtro Opcionales)
         // En una parte utiliza status = 2 para mostrar si en una actividad hubieron ganadores
@@ -81,7 +82,7 @@ const getActivities = async (req, res, next) => {
             rows
         } = await pool.query(text, values);
 
-        // Obtiene la cantidad total de Actividades por 'id_course' (Parámetros de Filtro Opcionales)
+        // Obtiene la cantidad total de actividades por 'id_course' (parámetros de filtro opcionales)
         const text2 = `
             SELECT count(*) 
             FROM activities 
@@ -116,10 +117,10 @@ const getActivities = async (req, res, next) => {
     }
 }
 
+// Actualiza una actividad
 const updateActivity = async (req, res, next) => {
 
     try {
-
         const client = await pool.pool.connect();
 
         const id_activity = parseInt(req.params.id_activity);
@@ -205,7 +206,7 @@ const updateActivity = async (req, res, next) => {
 
 }
 
-// 
+// Obtiene los estudiantes que participaron en una actividad
 const getStudentsByActivityID = async (req, res, next) => {
 
     try {
@@ -234,7 +235,6 @@ const getStudentsByActivityID = async (req, res, next) => {
 const deleteActivity = async (req, res, next) => {
 
     try {
-
         const { id_activity } = req.params;
 
         const text = `
@@ -268,8 +268,8 @@ const deleteActivity = async (req, res, next) => {
 
 
 
-// Actualiza la participación en la actividad
-function updateParticipation(id_activity, array_participation) {
+// Actualiza la participación en una actividad
+const updateParticipation = async (id_activity, array_participation) => {
     // array_participation: {id_user, status}
 
     // Actualizar múltiples registros en una query: https://stackoverflow.com/questions/37048772/update-multiple-rows-from-multiple-params-in-nodejs-pg

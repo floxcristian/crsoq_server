@@ -3,37 +3,17 @@
 // Load modules
 const pool = require('../database');
 
-async function getEnrollments(req, res, next) {
-
-    try {
-        const id_course = req.params.id_course;
-
-        const text1 = 'SELECT id_user FROM course_user WHERE id_course = $1';
-        const values1 = [id_course];
-        const res1 = (await pool.query(text1, values1)).rows[0];
-
-        //const res2 = (await pool.query(text2, values2)).rows[0];
-
-        res.json(res1)
-
-    } catch (error) {
-        next({
-            error
-        });
-    }
-}
-
 // Actualiza el estado de participación de un estudiante en una actividad
 const updateActivityParticipation = async (req, res, next) => {
 
     try {
-
         const { id_activity, id_user } = req.params;
         const {
             status
         } = req.body;
 
         // Comprobar si existe el registro antes??
+        // Actualiza el estado de participación del estudiante en la actividad
         const text = `
             UPDATE activity_user 
             SET status = $1 
@@ -51,22 +31,20 @@ const updateActivityParticipation = async (req, res, next) => {
     }
 }
 
-
+// 
 const updateActivityParticipations = async (req, res, next) => {
     
     try {
-        
         const id_activity = parseInt(req.params.id_activity);
-        const { array_participation } = req.body;
-        // array_participation: {id_user, status}
+        const { array_participation } = req.body; // array_participation: {id_user, status}
+        
         // Actualizar múltiples registros en una query: https://stackoverflow.com/questions/37048772/update-multiple-rows-from-multiple-params-in-nodejs-pg
         // Actualizar múltiples registros pasando un array de objetos: https://stackoverflow.com/questions/37059187/convert-object-array-to-array-compatible-for-nodejs-pg-unnest
 
-        // Inserta el 'id_activity' en cada registro (Object) del array 'array_participation'
+        // Inserta el 'id_activity' en cada registro del array 'array_participation'
         array_participation.map(participation => Object.assign(participation, {
             id_activity
         }));
-        // [ {id_user, id_activity, status} ]
         
         const text = `
             UPDATE activity_user AS au 

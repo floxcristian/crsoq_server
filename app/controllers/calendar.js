@@ -13,7 +13,7 @@ async function getCalendars(req, res, next) {
         const page_size = req.query.page_size || 20;
         const page = req.query.page || 1;
 
-        // Calcula el from a partir de los params 'page' y 'page_size'
+        // Calcula el 'from' a partir de los params 'page' y 'page_size'
         const from = (page - 1) * page_size;
 
         const text = `
@@ -52,11 +52,11 @@ async function getCalendars(req, res, next) {
     }
 }
 
-// Get Calendars as Select Options
+// Get calendars as select options
 const getCalendarOptions = async (req, res, next) => {
 
     try {
-        // Obtiene las categorías
+        // Obtiene las períodos acádemicos
         const text = `
             SELECT id_calendar, year, semester 
             FROM calendars 
@@ -64,7 +64,6 @@ const getCalendarOptions = async (req, res, next) => {
         const {
             rows
         } = await pool.query(text);
-
         res.json(rows);
     } catch (error) {
         next({
@@ -99,7 +98,7 @@ const createCalendar = async (req, res, next) => {
 }
 
 
-// Actualiza el período acádemico
+// Actualiza un período acádemico
 const updateCalendar = async (req, res, next) => {
     try {
         const {
@@ -124,10 +123,14 @@ const updateCalendar = async (req, res, next) => {
                 })
         }
 
-        const text2 = 'UPDATE calendars SET year = $1, semester = $2 WHERE id_calendar = $3 RETURNING id_calendar, year, semester, created_at, updated_at';
+        const text2 = `
+            UPDATE calendars 
+            SET year = $1, semester = $2 
+            WHERE id_calendar = $3 
+            RETURNING id_calendar, year, semester, created_at, updated_at`;
         const values2 = [year, semester, id_calendar];
         const res2 = (await pool.query(text2, values2)).rows[0];
-        res.json(res2)
+        res.json(res2);
 
     } catch (error) {
         next({

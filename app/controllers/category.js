@@ -4,89 +4,6 @@
 const pool = require('../database');
 
 
-// ----------------------------------------
-// Get Categories
-// ----------------------------------------
-/*async function getCategories(req, res, next) {
-
-    try {
-        // Body Params
-        const subject = req.params.subject;
-        const teacher_options = req.params.teacher_options;
-        const search = req.query.search;
-        const from = Number(req.query.from);
-        const limit = Number(req.query.limit);
-        const last_by_techer = req.query.last_by_teacher;
-        // Params
-        const id_user = req.query.id_user;
-        const id_subject = req.query.id_subject;
-
-
-       
-        //OBTIENE LAS CATEGORIAS DE UN PROFESOR, PARA UNA ASIGNATURA ESPECÍFICA
-        if (id_user && id_subject) {
-            const text = `SELECT id_category, name FROM categories WHERE id_user = $1 AND id_subject = $2;`;
-            const values = [id_user, id_subject];
-    
-            const { rows } = await pool.query(text, values);
-            return res.send(rows)
-        }
-
-
-        let values, query;
-
-        if (last_by_techer) {
-            const query = `SELECT s.name AS subject, c.id_category, c.name, c.created_at, c.updated_at FROM categories AS c INNER JOIN subjects AS s ON s.id_subject = c.id_subject WHERE id_user = $1 ORDER BY c.updated_at DESC LIMIT 5`;
-            const values = [last_by_techer];
-            const { rows } = await pool.query(query, values);
-            return res.send(rows)
-        }
-
-
-        //
-        if (teacher_options) {
-            const query = `${CATEGORIES_OPTIONS} WHERE id_user = $1 ORDER BY name`;
-            const values = [teacher_options]
-            const { rows } = await pool.query(query, values);
-            return res.send(rows[0])
-        }
-        else if ((from != undefined) && limit) {
-            query = CATEGORIES;
-            values = [limit, from];
-
-            if (subject || search) query += ` WHERE `;
-            if (subject) {
-                query += `id_subject = $${values.length + 1}`;
-                values.push(`${subject}`);
-            }
-            if (search) {
-                query += `name = $${values.length + 1}`;
-                values.push(`${search}`);
-            }
-            query += `${PAGINATION}`;
-
-        }
-        else {
-            query = `${CATEGORIES_OPTIONS} ORDER BY name`;
-        }
-
-
-        const { rows } = await pool.query(query, values);
-
-
-        const total = rows.length != 0 ? rows[0].count : 0;
-
-        // Envía respuesta al client
-        res.json({
-            total,
-            results: rows
-        })
-    } catch (error) {
-        next({ error });
-    }
-}
-*/
-
 // Si necesito las últimas 5 del profe debo enviar page_size=5 y solo el user_id
 // Obtiene las categorías
 const getCategories = async (req, res, next) => {
@@ -102,7 +19,8 @@ const getCategories = async (req, res, next) => {
         const from = (page - 1) * page_size;
 
         // Obtiene las clases
-        const text = `SELECT s.id_subject, s.name AS subject, c.id_category, c.name, c.created_at, c.updated_at 
+        const text = `
+        SELECT s.id_subject, s.name AS subject, c.id_category, c.name, c.created_at, c.updated_at 
         FROM categories AS c 
         INNER JOIN subjects AS s 
         ON s.id_subject = c.id_subject 
@@ -141,16 +59,10 @@ const getCategories = async (req, res, next) => {
     }
 }
 
-
-// ----------------------------------------
-// Get Categories as Select Options
-// ----------------------------------------
+// Get categories as select options
 const getCategoryOptions = async (req, res, next) => {
-    
     try { 
         const { id_user, id_subject } = req.query; 
-
-        // Obtiene las categorías
         const text = `
             SELECT id_category, name 
             FROM categories 
@@ -161,7 +73,6 @@ const getCategoryOptions = async (req, res, next) => {
         const {
             rows
         } = await pool.query(text, values);
-
         res.json(rows);
     } catch (error) {
         next({
@@ -173,7 +84,6 @@ const getCategoryOptions = async (req, res, next) => {
 
 // Crea una categoría
 const createCategory = async (req, res, next) => {
-
     try {
         const {
             id_user,
@@ -216,11 +126,14 @@ const updateCategory = async (req, res, next) => {
 
         // Comprobar si existe el registro antes??
 
-        const text2 = 'UPDATE categories SET id_subject = $1, name = $2, updated_at = NOW() WHERE id_category = $3';
-        const values2 = [id_subject, name, id_category];
-        const res2 = (await pool.query(text2, values2)).rows[0];
+        const text = `
+            UPDATE categories 
+            SET id_subject = $1, name = $2, updated_at = NOW() 
+            WHERE id_category = $3`;
+        const values = [id_subject, name, id_category];
+        const { rows } = await pool.query(text, values);
 
-        res.json(res2)
+        res.json(rows[0]);
 
     } catch (error) {
         next({
@@ -247,12 +160,13 @@ const deleteCategory = async (req, res, next) => {
     }
 }
 
-async function getLastCategories(req, res, next) {
+const getLastCategories = async (req, res, next) => {
     try {
         const { id_user } = req.query; 
         const page_size = req.query.page_size || null;
 
-        const text = `SELECT s.id_subject, s.name AS subject, c.id_category, c.name, c.created_at, c.updated_at 
+        const text = `
+        SELECT s.id_subject, s.name AS subject, c.id_category, c.name, c.created_at, c.updated_at 
         FROM categories AS c 
         INNER JOIN subjects AS s 
         ON s.id_subject = c.id_subject 

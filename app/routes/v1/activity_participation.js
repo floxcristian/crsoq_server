@@ -8,12 +8,7 @@ const { activityParticipationCtrl } = require('../../controllers');
 
 var api = express.Router();
 
-
-//api.get('/select_options', _lessonController.getLessonOptions); //Opciones para el Selector
-//api.get('/', _lessonController.getLessons);
-//api.post('/', _lessonController.createLesson);
-
-// Routes and Controllers
+// Routes and controllers
 api.post('/:id_activity', activityParticipationCtrl.updateActivityParticipations); // Agrega varias preguntas a la biblioteca
 api.put('/:id_activity/:id_user', activityParticipationCtrl.updateActivityParticipation);
 //api.delete('/:lessonId', _lessonController.deleteLesson);
