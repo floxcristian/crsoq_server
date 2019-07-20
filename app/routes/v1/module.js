@@ -2,16 +2,16 @@
 
 // Load modules
 const express = require('express');
-const moduleController = require('../../controllers')._module;
+const { moduleCtrl }  = require('../../controllers');
 
 var api = express.Router();
 
 // Routes and controllers
-api.get('/', moduleController.getModules);
-api.get('/select_options', moduleController.getModuleOptions); //Opciones para el Selector
-api.post('/', moduleController.createModule);
-api.put('/:id_module', moduleController.updateModule); 
-api.delete('/:id_module', moduleController.deleteModule); 
+api.get('/', moduleCtrl.getModules);
+api.get('/select_options', moduleCtrl.getModuleOptions); //Opciones para el Selector
+api.post('/', moduleCtrl.createModule);
+api.put('/:id_module', moduleCtrl.updateModule); 
+api.delete('/:id_module', moduleCtrl.deleteModule); 
 // api.get('/count', calendarController.countCalendar);
 
 module.exports = api;

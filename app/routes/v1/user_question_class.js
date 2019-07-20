@@ -1,20 +1,14 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const express = require('express');
-const userQuestionClassController = require('../../controllers').user_question_class;
+const { userQuestionClassCtrl } = require('../../controllers');
+
 var api = express.Router();
 
-// ----------------------------------------
-// Routes and Controllers
-// ----------------------------------------
-api.get('/', userQuestionClassController.getStudents);
-api.post('/winner_student', userQuestionClassController.setWinnerStudent);
-api.post('/loser_student', userQuestionClassController.setLoserStudent);
+// Routes and controllers
+api.get('/', userQuestionClassCtrl.getStudents);
+api.post('/winner_student', userQuestionClassCtrl.setWinnerStudent);
+api.post('/loser_student', userQuestionClassCtrl.setLoserStudent);
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = api;

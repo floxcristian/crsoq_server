@@ -1,12 +1,11 @@
 'use strict'
 
-
-// Load Modules
+// Load modules
 const bcrypt = require('bcrypt-nodejs');
 const pool = require('../database');
 
-// Get Users
-async function getUsers(req, res, next) {
+// Obtiene usuarios
+const getUsers = async (req, res, next) => {
     try {
         //const search = req.query.search || null;
         const role = req.query.role || null;
@@ -18,7 +17,7 @@ async function getUsers(req, res, next) {
         const from = (page - 1) * page_size;
 
 
-        const query = `
+        const text = `
             SELECT u.id_user, u.name, u.last_name, u.middle_name, u.document, u.email, u.phone, u.username, u.active, u.profile_image, u.created_at, u.updated_at, r.roles
             FROM users AS u 
             INNER JOIN (
@@ -36,29 +35,29 @@ async function getUsers(req, res, next) {
         const values = [role, status, page_size, from]
         const {
             rows
-        } = await pool.query(query, values);
+        } = await pool.query(text, values);
 
         // Obtiene la cantidad total de clases (de acuerdo a los parámetros de filtro)
         const text2 = `
-        SELECT count(*) 
-        FROM users AS u
-        INNER JOIN (
-            SELECT id_user
-            FROM roles 
-            GROUP BY id_user 
-            HAVING ($1::int IS NULL OR $1 = ANY(array_agg(role)))
-        ) AS r 
-        ON u.id_user = r.id_user
-        WHERE ($2::bool IS NULL OR u.active = $2)`;
+            SELECT count(*) 
+            FROM users AS u
+            INNER JOIN (
+                SELECT id_user
+                FROM roles 
+                GROUP BY id_user 
+                HAVING ($1::int IS NULL OR $1 = ANY(array_agg(role)))
+            ) AS r 
+            ON u.id_user = r.id_user
+            WHERE ($2::bool IS NULL OR u.active = $2)`;
         const values2 = [role, status];
-        const total_items = (await pool.query(text2, values2)).rows[0].count;
+        const { count } = (await pool.query(text2, values2)).rows[0];
 
         res.json({
             info: {
-                total_pages: Math.ceil(total_items / page_size),
+                total_pages: Math.ceil(count / page_size),
                 page: page,
                 page_size: page_size,
-                total_items: parseInt(total_items)
+                total_items: parseInt(count)
             },
             items: rows
         });
@@ -69,19 +68,19 @@ async function getUsers(req, res, next) {
     }
 }
 
-async function getUserByUserId(req, res, next) {
+const getUserByUserId = async (req, res, next) => {
     try {
-        const id_user = req.params.userId;
+        const { id_user } = req.params;
 
         const text = `
-        SELECT id_user, name, last_name, middle_name, document, email, phone, username, active, profile_image, created_at, updated_at 
-        FROM users 
-        WHERE id_user = $1`;
+            SELECT id_user, name, last_name, middle_name, document, email, phone, username, active, profile_image, created_at, updated_at 
+            FROM users 
+            WHERE id_user = $1`;
         const values = [id_user];
         const {
             rows
         } = await pool.query(text, values);
-        res.json(rows)
+        res.json(rows);
     } catch (error) {
         next({
             error
@@ -89,34 +88,32 @@ async function getUserByUserId(req, res, next) {
     }
 }
 
-async function getUsersStudents(req, res) {
+const getUsersStudents = async (req, res, next) => {
     try {
-        // Query Params
-        const document = req.query.document;
-        const id_course = req.query.id_course;
+        const { id_course, document } = req.query;
 
         //const text = 'SELECT u.id_user, u.name, u.last_name, u.middle_name, u.document FROM roles AS r INNER JOIN users AS u ON r.id_user = u.id_user WHERE role = 3 AND document = $1';
         const text = `
-        SELECT r.id_user, u.name, u.last_name, u.middle_name, u.document, u.username, u.email, 
-        CASE WHEN EXISTS (
-            SELECT cu.id_user 
-            FROM course_user AS cu 
-            WHERE cu.id_user = u.id_user 
-            AND id_course = $1) 
-            THEN TRUE 
-            ELSE FALSE END AS enrolled 
-        FROM roles AS r 
-        INNER JOIN users AS u 
-        ON r.id_user = u.id_user 
-        WHERE role = 3 
-        AND document = $2`;
+            SELECT r.id_user, u.name, u.last_name, u.middle_name, u.document, u.username, u.email, 
+            CASE WHEN EXISTS (
+                SELECT cu.id_user 
+                FROM course_user AS cu 
+                WHERE cu.id_user = u.id_user 
+                AND id_course = $1) 
+                THEN TRUE 
+                ELSE FALSE END AS enrolled 
+            FROM roles AS r 
+            INNER JOIN users AS u 
+            ON r.id_user = u.id_user 
+            WHERE role = 3 
+            AND document = $2`;
         const values = [id_course, document];
         const {
             rows
         } = await pool.query(text, values);
         res.json({
             items: rows
-        })
+        });
 
     } catch (error) {
         next({
@@ -124,12 +121,13 @@ async function getUsersStudents(req, res) {
         });
     }
 }
-async function createUser(req, res) {
+
+// Crea un usuario
+const createUser = async (req, res, next) => {
 
     const client = await pool.pool.connect();
 
     try {
-
         const {
             name,
             last_name,
@@ -144,14 +142,14 @@ async function createUser(req, res) {
         } = req.body;
 
 
-        //console.log("ROLES EN LA DB QLO: ", roles);
+
         if (name && last_name && middle_name && document && email && phone && username && password && roles) {
             //COMPRUEBO QUE EL RUT,USERNAME E EMAIL NO EXISTAN  EN LA BASE DE DATOS user.rut.toLowerCase()
 
             if (roles.length == 0) {
                 return res.status(400).send({
                     message: 'Debe enviar al menos un rol dentrol del array de roles.'
-                })
+                });
             }
 
             const result_search = await Promise.all([
@@ -202,14 +200,16 @@ async function createUser(req, res) {
                         message: `this email has been taken`
                     })
                 default:
-                    //HASHEA LA PASSWORD
-                    let salt = bcrypt.genSaltSync(10);
 
+                    let salt = bcrypt.genSaltSync(10); // Hashea la password
                     //INICIA LA TRANSACCIÓN
                     client.query('BEGIN');
 
-                    //INSERCIÓN DE USUARIO
-                    const text1 = 'INSERT INTO users(name, last_name, middle_name, document, email, phone, username, password) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at';
+                    // Inserta al usuario
+                    const text1 = `
+                        INSERT INTO users(name, last_name, middle_name, document, email, phone, username, password) 
+                        VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
+                        RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
                     const values1 = [name, last_name, middle_name, document, email, phone, username, bcrypt.hashSync(password, salt)];
                     const user = (await client.query(text1, values1)).rows[0];
 
@@ -218,23 +218,23 @@ async function createUser(req, res) {
                         text,
                         values
                     } = insertRoles(roles, user.id_user);
-                    const role = (await client.query(text, values)).rows;
+                    await client.query(text, values);
 
-                    //FINALIZA LA TRANSACCIÓN
-                    await client.query('COMMIT')
+
+                    await client.query('COMMIT'); // Finaliza la transacción
 
                     //const roles = await pool.query('INSERT INTO roles(id_user, role) VALUES($1, $2)', [rows[0].id_user, '3']);
                     //GENERO EL TOKEN CON DATOS DE USUARIO Y ROLES
                     res.json({
                         message: 'successfully created user',
                         user
-                    })
+                    });
             }
         } else {
             await client.query('ROLLBACK');
             res.status(400).send({
                 message: 'send all necessary fields'
-            })
+            });
         }
     } catch (error) {
         next({
@@ -248,13 +248,12 @@ async function createUser(req, res) {
 
 
 
-async function updateUser(req, res, next) {
+const updateUser = async (req, res, next) => {
 
     const client = await pool.pool.connect();
 
     try {
-        const id_user = req.params.userId;
-        // Body Params
+        const { id_user } = req.params;
         const {
             name,
             last_name,
@@ -274,8 +273,8 @@ async function updateUser(req, res, next) {
 
             let promises = [];
 
-            // Inicia la transacción
-            client.query('BEGIN');
+
+            client.query('BEGIN'); // Inicia la transacción
 
             // Consulta para actualizar el usuario
             const q_update_us = 'UPDATE users SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7, active = $8 WHERE id_user = $9 RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at';
@@ -299,14 +298,11 @@ async function updateUser(req, res, next) {
                     text,
                     values
                 } = deleteRoles(delete_roles, id_user);
-                console.log("texti2: ", text);
-                console.log("valuesi2: ", values)
                 promises.push(client.query(text, values));
             }
 
             // Resuelvo el array de consultas
             const result_update = await Promise.all(promises);
-            console.log("result update: ", result_update[0]);
 
             //
             result_update.map(result => {
@@ -317,32 +313,38 @@ async function updateUser(req, res, next) {
                 }
             })
 
-
-            // Finaliza la transacción
-            await client.query('COMMIT')
+            await client.query('COMMIT'); // Finaliza la transacción
 
             // Obtiene los datos del usuario actualizado (result_update[0] para obtener los datos de la query de actualización)
             user = result_update[0].rows[0];
         } else if (id_user != req.user_payload.id_user) { //SI SOY DUEÑO DEL ID
-            let text = 'UPDATE users SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7 WHERE id_user = $8 RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at';
+            let text = `
+                UPDATE users 
+                SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7 
+                WHERE id_user = $8 
+                RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
             let values = [name, last_name, middle_name, document, email, phone, username, id_user];
 
             user = await pool.query(text, values);
         } else {
             return res.status(500).json({
                 message: `you don't have permission to update user data`
-            })
+            });
         }
 
         //RECUPERO ROLES, QUITO LA CONTRASEÑA Y ENVIO RESPONSE...
-        const _roles = (await pool.query('SELECT array_agg(role ORDER BY role) AS roles FROM roles WHERE id_user = $1', [id_user])).rows;
+        const text3 = `
+            SELECT array_agg(role ORDER BY role) AS roles 
+            FROM roles 
+            WHERE id_user = $1`;
+        const values3 = [id_user];
+        const _roles = (await pool.query(text3, values3)).rows;
         user.roles = _roles[0].roles;
         delete user.password;
 
         res.json({
-            success: true,
             user: user
-        })
+        });
 
     } catch (error) {
         await client.query('ROLLBACK');
@@ -355,12 +357,15 @@ async function updateUser(req, res, next) {
 }
 
 //NO ME DEJA BORRAR PORQUE DEPENDE DE TABLA ROLE...
-async function deleteUser(req, res, next) {
+// Elimina un usuario
+const deleteUser = async (req, res, next) => {
     try {
-        const id_user = req.params.userId;
-        const {
-            rows
-        } = await pool.query('DELETE FROM users WHERE id_user = $1', [id_user]);
+        const { id_user } = req.params;
+        const text = `
+            DELETE FROM users 
+            WHERE id_user = $1`;
+        const values = [id_user];
+        await pool.query(text, values);
         res.json({
             message: 'successfully deleted user'
         });
@@ -371,12 +376,15 @@ async function deleteUser(req, res, next) {
     }
 }
 
-async function disableUser(req, res) {
+const disableUser = async (req, res, next) => {
     try {
-        const id_user = req.params.userId;
-        const {
-            rows
-        } = await pool.query('UPDATE users SET active = false WHERE id_user = $1', [id_user]);
+        const { id_user } = req.params;
+        const text = `
+            UPDATE users 
+            SET active = false 
+            WHERE id_user = $1`;
+        const values = [id_user];
+        await pool.query(text, values);
         res.json({
             message: 'successfully disabled user'
         });
@@ -472,13 +480,16 @@ function searchAnything(search_value, index) {
     }
 }
 
-async function countUser(req, res) {
+const countUser = async (req, res, next) => {
     try {
+        const text = `
+            SELECT count(*) AS count 
+            FROM users`;
         const {
-            rows
-        } = await pool.query('SELECT count(*) AS count FROM users');
+            count
+        } = (await pool.query(text)).rows[0];
         res.json({
-            result: rows[0].count
+            result: count
         });
     } catch (error) {
         next({
@@ -528,9 +539,6 @@ function formatRolesArray2(array_roles, id_user) {
     return array_roles.map((role) => [id_user, role]);
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getUsers,
     getUserByUserId,

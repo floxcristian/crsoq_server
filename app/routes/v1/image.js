@@ -2,10 +2,11 @@
 
 // Load modules
 const express = require('express');
+const { imageCtrl } = require('../../controllers');
 //const fs = require('fs');
 //const path = require('path');
 //const { checkToken } = require('../../middlewares/authenticated');
-const imageController = require('../../controllers')._image;
+
 
 const api = express.Router();
 
@@ -13,7 +14,7 @@ const api = express.Router();
 api.get('/', (req, res)=>{
     console.log("nicol!!!!!");
 })
-api.get('/images/:category_type/:image_file', imageController.getImages);
+api.get('/images/:category_type/:image_file', imageCtrl.getImages);
 
 module.exports = api;
 

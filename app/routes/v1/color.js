@@ -2,16 +2,16 @@
 
 // Load modules
 const express = require('express');
-const colorController = require('../../controllers').color;
+const { colorCtrl } = require('../../controllers');
 
 var api = express.Router();
 
 // Routes and controllers
-api.get('/', colorController.getColors);
-api.get('/:id_user', colorController.getColorsByUserId);
-api.post('/create', colorController.createColor);
-api.put('/update/:id_color', colorController.updateColor);
-api.delete('/delete/:id_color', colorController.deleteColor);
-//api.get('/:userId/:page?', colorController.getColorsByUserId);
+api.get('/', colorCtrl.getColors);
+api.get('/:id_user', colorCtrl.getColorsByUserId);
+api.post('/create', colorCtrl.createColor);
+api.put('/update/:id_color', colorCtrl.updateColor);
+api.delete('/delete/:id_color', colorCtrl.deleteColor);
+//api.get('/:userId/:page?', colorCtrl.getColorsByUserId);
 
 module.exports = api;

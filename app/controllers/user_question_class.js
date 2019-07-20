@@ -30,9 +30,7 @@ const getStudents = async(req, res, next) => {
             AND id_question = $2`;
         const values = [id_class, id_question];
         const { rows } = await pool.query(text, values);
-
-        res.json(rows)
-    
+        res.json(rows);
     } catch (error) {
         next({
             error
@@ -65,7 +63,6 @@ const setLoserStudent = async (req, res, next) => {
         // Actualiza el estado del participante a 'perdedor' (si lo encuentra)
         if(index_student >= 0) participants[index_student].status = 4;
 
-        console.log("nopoe: ", socket.getStudentsInClassroom(id_class));
         // Inserta al estudiante perdedor en la base de datos
         const text = `
             INSERT INTO user_question_class(id_user, id_class, id_question, status) 
@@ -152,19 +149,6 @@ const setWinnerStudent = async(req, res, next) => {
         const values = formatStudentValues(asistentes, id_class, id_question);
         await pool.query(text, values);
 
-        /* 
-        const text = `
-        INSERT INTO class_question (id_question, id_class) 
-        SELECT * FROM UNNEST ($1::int[], $2::int[])`;
-        */
-
-        // Inserto el resto de los estudiantes
-        // + Obtener el array global.
-
-
-        //console.log("ROWS: ", rows);
-
-        
         let io = socket.getSocket(); // Obtiene el websocket
         // Emite a los estudiantes de la sala (se incluye) que un estudiante ganó
         io.in(id_class + 'play-question-section')
@@ -175,16 +159,9 @@ const setWinnerStudent = async(req, res, next) => {
                 update_question_status: 5 // status 'sesión finalizada'
             });
 
-
-
-        //let participantes = socket.getStudentParticipants(id_class);
-        //console.log("PARTICIPANTS: ", participants);
         res.json({
             message: 'successfully update status'
-        })
-
-        // Finalizar pregunta
-
+        });
 
     } catch (error) {
         next({

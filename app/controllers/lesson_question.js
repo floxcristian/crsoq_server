@@ -321,12 +321,10 @@ async function updateLessonQuestions(req, res, next) {
 
 
 // Actualiza el estado de una pregunta de una clase
-// + Estados: 1: no iniciada, 2: activa, 3: detenida, 4: finalizada
-// * Estados de pregunta de clase: 1: no iniciada, 2: activa, 3: detenida, 4: estudiante respondiendo , 5: finalizada
+// + Estados: 1: no iniciada, 2: iniciada, 3: detenida, 4: respondiendo , 5: finalizada
 const updateLessonQuestion = async (req, res, next) => {
 
     try {
-
         const {
             status
         } = req.body;
@@ -335,6 +333,7 @@ const updateLessonQuestion = async (req, res, next) => {
             id_question
         } = req.params;
        
+        let participants_overview;
 
         if (status == 1) { // Reinicia una pregunta (status 'no iniciada')
 
@@ -369,11 +368,21 @@ const updateLessonQuestion = async (req, res, next) => {
 
         } else if (status == 5) { // Finaliza una pregunta (status 'finalizada')
 
+            const participants = socket.getStudentParticipants(id_class);
+            //> Obtener un resumen de participantes
+            const total = participants.length;
+            const no_selected = participants.filter(student => (student.status === 2 || student.status == 3)).length;
+            const losers = participants.filter(student => student.status === 4).length;
+            const winner = participants.find(student => student.status == 5) || null;
+
+            participants_overview = {
+                no_selected, losers, winner, total
+            };
+
             // Elimina participantes de la variable 'participants_of_a_question'
             socket.setParticipants(id_class, []);
             // Actualiza el estado de los estudiantes en clase 'students_in_classrooms' a 'en espera' (status 1) 
             socket.resetStudentsInClassroomStatus(id_class);
-
         }
 
         // + Verificar que el estado de la pregunta cambia antes de actualizar?
@@ -398,7 +407,7 @@ const updateLessonQuestion = async (req, res, next) => {
             rows
         } = await pool.query(text2, values2);
 
-        // Obtiene datos de la pregunta
+        // Obtiene datos adicionales de la pregunta
         const text3 = `
             SELECT id_question, difficulty, description, image 
             FROM questions
@@ -411,15 +420,17 @@ const updateLessonQuestion = async (req, res, next) => {
 
         if (status != 1) {
             // Emite la pregunta a los estudiantes que esten en la sección de juego de la clase
-            io.in(id_class + 'play-question-section').emit('playingTheClassQuestion', {
-                question
+            io.in(id_class + 'play-question-section').emit('studentHasEnteredToTheClassroom', {
+                type: 3,
+                detail: 'UPDATE_QUESTION_STATUS',
+                question: question,
+                participants_overview: participants_overview || {}
             });
         }
 
 
         // Si se ha iniciado una pregunta y el estado actualizado es diferente al estado original 
         if (status == 2 && original_status != status) {
-            // Crea un array de estudiantes en la clase...
 
             // Obtiene el 'id_course' y el 'subject' para emitir notificación
             const text = `
@@ -438,7 +449,7 @@ const updateLessonQuestion = async (req, res, next) => {
                 subject
             } = (await pool.query(text, values)).rows[0];
 
-            // Emiter: indican a estudiantes del curso que se inició una pregunta
+            // Emiter: indica a estudiantes del curso que se inició una pregunta
             io.in(id_course + 'students').emit('classQuestionStarted', {
                 id_course,
                 subject
@@ -639,3 +650,14 @@ module.exports = {
     updateLessonQuestion,
     deleteClassQuestion
 }
+
+/*
+participants: [
+    {
+        status: 3
+    },
+    {
+        status: 2
+    }
+ ]
+ */

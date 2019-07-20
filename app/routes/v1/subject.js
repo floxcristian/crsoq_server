@@ -2,16 +2,16 @@
 
 // Load modules
 const express = require('express');
-const subjectController = require('../../controllers').subject;
+const { subjectCtrl } = require('../../controllers');
 const { checkToken } = require('../../middlewares/authenticated');
 var api = express.Router();
 
 // Routes and controllers
-api.get('/count', checkToken, subjectController.countSubject);
-api.get('/select_options', subjectController.getSubjectOptions); //Opciones para el Selector
-api.get('/', checkToken, subjectController.getSubjects);
-api.post('/', subjectController.createSubject);
-api.put('/:id_subject', subjectController.updateSubject);
-api.delete('/:id_subject', subjectController.deleteSubject);
+api.get('/count', checkToken, subjectCtrl.countSubject);
+api.get('/select_options', subjectCtrl.getSubjectOptions); //Opciones para el Selector
+api.get('/', checkToken, subjectCtrl.getSubjects);
+api.post('/', subjectCtrl.createSubject);
+api.put('/:id_subject', subjectCtrl.updateSubject);
+api.delete('/:id_subject', subjectCtrl.deleteSubject);
 
 module.exports = api;

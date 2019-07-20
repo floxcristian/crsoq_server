@@ -1,23 +1,16 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const express = require('express');
-const workspaceController = require('../../controllers')._workspace;
+const { workspaceCtrl } = require('../../controllers');
 
 var api = express.Router();
 
-// ----------------------------------------
-// Routes and Controllers
-// ----------------------------------------
-api.get('/', workspaceController.getWorkspaces);
-api.post('/', workspaceController.updateWorkspaces);
+// Routes and controllers
+api.get('/', workspaceCtrl.getWorkspaces);
+api.post('/', workspaceCtrl.updateWorkspaces);
 //api.put('/:workspaceId', workspaceController.updateWorkspace);
 //api.delete('/:workspaceId', workspaceController.deleteWorkspace);
 //api.get('/count', calendarController.countCalendar);
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = api;

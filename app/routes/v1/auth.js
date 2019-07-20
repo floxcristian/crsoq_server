@@ -2,7 +2,7 @@
 
 // Load modules
 const express = require('express');
-const authController = require('../../controllers').auth;
+const { authCtrl } = require('../../controllers');
 const validation = require('../../validations/auth.validation');
 const { checkToken } = require('../../middlewares/authenticated');
 const validate = require('../../middlewares/validation-result');
@@ -11,9 +11,9 @@ var api = express.Router();
 
 // Routes and controllers
 //api.post('/login', validation.login, validate.checkResult, authController.login);
-api.post('/login', validation.login, authController.login);
-api.post('/update_session', checkToken, authController.updateSession);
-api.post('/renew_token', checkToken, authController.renewToken);
+api.post('/login', validation.login, authCtrl.login);
+api.post('/update_session', checkToken, authCtrl.updateSession);
+api.post('/renew_token', checkToken, authCtrl.renewToken);
 //api.post('/reject_refresh_token', authController)
 //api.post('/signup', );
 //api.post('/forgot', );

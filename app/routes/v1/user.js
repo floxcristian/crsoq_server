@@ -1,22 +1,20 @@
 'use strict'
 
-// Load Modules
+// Load modules
 const express = require('express');
-const userController = require('../../controllers').user;
+const { userCtrl } = require('../../controllers');
 const { checkToken } = require('../../middlewares/authenticated');
 var api = express.Router();
 
-// Routes and Controllers
-//api.get('/:page?', checkToken, userController.getUsers);
-api.get('/students', userController.getUsersStudents);
-api.get('/count', userController.countUser);
+// Routes and controllers
+//api.get('/:page?', checkToken, userCtrl.getUsers);
+api.get('/students', userCtrl.getUsersStudents);
+api.get('/count', userCtrl.countUser);
 
-api.get('/', userController.getUsers);
-api.get('/:userId', userController.getUserByUserId);
-api.post('/', userController.createUser);
-api.put('/:userId', userController.updateUser);
-api.delete('/:userId', userController.deleteUser);
-
-
+api.get('/', userCtrl.getUsers);
+api.get('/:id_user', userCtrl.getUserByUserId);
+api.post('/', userCtrl.createUser);
+api.put('/:id_user', userCtrl.updateUser);
+api.delete('/:id_user', userCtrl.deleteUser);
 
 module.exports = api;

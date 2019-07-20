@@ -399,7 +399,10 @@ function initWebServer() {
                     const question = (await pool.query(text2, values2)).rows[0];
 
                     // Emite al mismo estudiante la pregunta activa (si es que hay)
-                    if (question) socket.emit('playingTheClassQuestion', { question });
+                    if (question) socket.emit('studentHasEnteredToTheClassroom', { 
+                        type: 3,
+                        detail: 'UPDATE_QUESTION_STATUS',
+                        question: question });
 
                     let participation_status = 1; // Establece el estado del estudiante en 'en espera'
 
@@ -409,7 +412,6 @@ function initWebServer() {
                         const student = student_participants_of_a_question[id_class].find(participant => participant.id_user == user.id_user);
                         // Actualiza el estado del estudiante (si lo encuentra)
                         if (student) participation_status = student.status;
-                        
                     }
 
                     // Crea el array de estudiantes en la clase (si no existe)  

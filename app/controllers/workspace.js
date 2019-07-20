@@ -9,7 +9,7 @@ const pool = require('../database');
 const getWorkspaces = async (req, res, next) => {
     try {
 
-        const id_user = req.query.id_user; // Obligatorio
+        const { id_user } = req.query;
 
         // Calcula el from a partir de los params 'page' y 'page_size'
         //const from = (page - 1) * page_size;
