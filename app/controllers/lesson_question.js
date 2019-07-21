@@ -374,9 +374,10 @@ const updateLessonQuestion = async (req, res, next) => {
             const no_selected = participants.filter(student => (student.status === 2 || student.status == 3)).length;
             const losers = participants.filter(student => student.status === 4).length;
             const winner = participants.find(student => student.status == 5) || null;
+            const winner_name = winner ? (`${winner.name} ${winner.lastname} ${winner.middle_name}`) : '--';
 
             participants_overview = {
-                no_selected, losers, winner, total
+                no_selected, losers, winner_name, total
             };
 
             // Elimina participantes de la variable 'participants_of_a_question'
