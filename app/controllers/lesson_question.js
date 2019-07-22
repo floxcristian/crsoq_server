@@ -6,15 +6,13 @@ const pool = require('../database');
 const _file = require('../services/file');
 var socket = require('../../index');
 
-// ----------------------------------------
+
 // Obtiene las preguntas que ya han sido agregadas a la clase.
 // + Enviar atributo winners: true/false
-// ----------------------------------------
 const getLessonQuestions = async (req, res, next) => {
 
     try {
-        // Query Params
-        const id_lesson = req.query.id_lesson;
+        const { id_lesson } = req.query;
         const id_category = req.query.id_category || null;
         const id_subcategory = req.query.id_subcategory || null;
         const difficulty = req.query.difficulty || null;
@@ -80,14 +78,14 @@ const getLessonQuestions = async (req, res, next) => {
             AND ($3::int IS NULL OR s.id_subcategory = $3)
             AND ($4::int IS NULL OR q.difficulty = $4)`;
         const values2 = [id_lesson, id_category, id_subcategory, difficulty];
-        const total_items = (await pool.query(text2, values2)).rows[0].count;
+        const { count } = (await pool.query(text2, values2)).rows[0];
 
         res.send({
             info: {
-                total_pages: Math.ceil(total_items / page_size),
+                total_pages: Math.ceil(count / page_size),
                 page: page,
                 page_size: page_size,
-                total_items: parseInt(total_items),
+                total_items: parseInt(count),
             },
             items: rows
         });
@@ -102,11 +100,7 @@ const getLessonQuestions = async (req, res, next) => {
 // Obtiene las preguntas de la biblioteca de la asignatura e indica cuales han sido agregadas a la clase.
 async function getAllQuestionsForLesson(req, res, next) {
     try {
-
-        // Query Params
-        const id_user = req.query.id_user;
-        const id_subject = req.query.id_subject;
-        const id_lesson = req.query.id_lesson;
+        const { id_user, id_subject, id_lesson } = req.query;
 
         const id_category = req.query.id_category || null;
         const id_subcategory = req.query.id_subcategory || null;
@@ -166,14 +160,14 @@ async function getAllQuestionsForLesson(req, res, next) {
             AND ($4::int IS NULL OR s.id_subcategory = $4)
             AND ($5::int IS NULL OR q.difficulty = $5)`;
         const values2 = [id_user, id_subject, id_category, id_subcategory, difficulty];
-        const total_items = (await pool.query(text2, values2)).rows[0].count;
+        const { count} = (await pool.query(text2, values2)).rows[0];
 
         res.send({
             info: {
-                total_pages: Math.ceil(total_items / page_size),
+                total_pages: Math.ceil(count / page_size),
                 page: page,
                 page_size: page_size,
-                total_items: parseInt(total_items),
+                total_items: parseInt(count),
             },
             items: rows
         });
@@ -504,25 +498,20 @@ function formatWorkspaceArray(array_questions, id_lesson) {
 }
 
 
-// Elimina una pregunta
+// Elimina una pregunta asignada a una clase
 const deleteClassQuestion = async (req, res, next) => {
-
     try {
         const {
             id_class,
             id_question
         } = req.params;
-
-
         const text = `
             DELETE FROM class_question 
             WHERE id_class = $1 
             AND id_question = $2`;
         const values = [id_class, id_question]
         await pool.query(text, values);
-
         res.sendStatus(204);
-
     } catch (error) {
         next({
             error
@@ -535,9 +524,7 @@ const getCourseQuestions = async (req, res, next) => {
 
     try {
 
-        const id_user = req.query.id_user;
-        const id_subject = req.query.id_subject;
-        const id_course = req.query.id_course;
+        const { id_user, id_subject, id_course } = req.query;
 
         const id_category = req.query.id_category || null;
         const id_subcategory = req.query.id_subcategory || null;
