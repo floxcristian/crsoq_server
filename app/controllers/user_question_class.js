@@ -15,7 +15,6 @@ var socket = require('../../index');
 const getStudents = async(req, res, next) => {
     
     try {
-
         const {
             id_class,
             id_question
@@ -42,28 +41,28 @@ const getStudents = async(req, res, next) => {
 const setLoserStudent = async (req, res, next) => {
 
     try {
-
         const {
-            loser_student,
+            loser_student, //>
             id_class,
             id_question
         } = req.body;
-        const { id_user } = loser_student;
+        const { id_user } = loser_student; //>
 
-        let asistentes = socket.getStudentsInClassroom(id_class); // Obtiene a los asistentes de la clase
-        // Busca al perdedor entre los asistentes
-        let index_perdedor = asistentes.findIndex(asistente => asistente.id_user == id_user); 
-        // Actualiza el estado del estudiante a 'perdedor' (si lo encuentra)
-        if (index_perdedor >= 0) asistentes[index_perdedor].participation_status = 4; 
+         // Obtiene los asistentes de la clase
+         let attendes = socket.getStudentsInClassroom(id_class); 
+         // Busca al estudiante entre los asistentes
+         let index_student = attendes.findIndex(attende => attende.id_user == id_user); 
+         // Actualiza el estado del estudiante (si lo encuentra)
+         if (index_student >= 0) attendes[index_student].participation_status = 4; //> 
 
         // Obtiene los participantes
         let participants = socket.getStudentParticipants(id_class);
         // Busca al perdedor entre los participantes
         let index_student = participants.findIndex(participant => participant.id_user == id_user);
-        // Actualiza el estado del participante a 'perdedor' (si lo encuentra)
-        if(index_student >= 0) participants[index_student].status = 4;
+        // Actualiza el estado del estudiante (si lo encuentra)
+        if(index_student >= 0) participants[index_student].status = 4; //>
 
-        // Inserta al estudiante perdedor en la base de datos
+        // Actualiza el estado del estudiante
         const text = `
             INSERT INTO user_question_class(id_user, id_class, id_question, status) 
             VALUES($1, $2, $3, 3) 
@@ -71,8 +70,9 @@ const setLoserStudent = async (req, res, next) => {
         const values = [id_user, id_class, id_question];
         await pool.query(text, values);
 
-        let io = socket.getSocket(); // Obtiene el websocket
-        // Emite a los estudiantes de la sala (se incluye) que un estudiante perdío
+        // Obtiene el websocket
+        let io = socket.getSocket(); 
+        // Emite a los estudiantes de la sala (se incluye) que un estudiante cambio de estado
         io.in(id_class + 'play-question-section')
             .emit('studentHasEnteredToTheClassroom', {
                 type: 2,
@@ -82,7 +82,6 @@ const setLoserStudent = async (req, res, next) => {
                 update_question_status: 3 // status 'seleccionando un estudiante'
             }); 
 
-        //let participantes = socket.getStudentParticipants(id_class);
         res.json({
             message: 'successfully update status'
         });
@@ -96,15 +95,16 @@ const setLoserStudent = async (req, res, next) => {
 
 
 // Establece un estudiante ganador
+// Si ningún estudiante gana entonces no se establecen los estados de todos los participantes
 const setWinnerStudent = async(req, res, next) => {
     try {
 
         const {
-            winner_student,
+            winner_student, //>
             id_class,
             id_question
         } = req.body;
-        const { id_user } = winner_student;
+        const { id_user } = winner_student; //>
 
         // Inserto el estudiante ganador en la base de datos.
         // + Para evitar errores podría hacer que lo cree o lo actualice si ya existe con ON CONFLICT.
@@ -118,10 +118,14 @@ const setWinnerStudent = async(req, res, next) => {
         //     rows
         // } = await pool.query(text, values);
 
-        // Modifico el array global de estudiantes del curso.
-        let asistentes = socket.getStudentsInClassroom(id_class);
-        let index_ganador = asistentes.findIndex(asistente => asistente.id_user == id_user);
-        if (index_ganador >= 0) asistentes[index_ganador].participation_status = 5;
+    
+        // Obtiene los asistentes de la clase
+        let attendes = socket.getStudentsInClassroom(id_class); 
+        // Busca al estudiante entre los asistentes
+        let index_student = attendes.findIndex(attende => attende.id_user == id_user); 
+        // Actualiza el estado del estudiante (si lo encuentra)
+        if (index_student >= 0) attendes[index_student].participation_status = 5; //> 
+
 
 
         // Obtengo los estudiantes que perdieron (desde la base de datos).
@@ -142,18 +146,22 @@ const setWinnerStudent = async(req, res, next) => {
         // });
 
 
-        // Inserta varios registros
+        // Inserta al estudiante ganador en la base de datos ??
+
+        // Inserta los estados de cada estudiante asistente
         const text = `
             INSERT INTO user_question_class(id_user, id_class, id_question, status)
             SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[], $4::int[])`;
-        const values = formatStudentValues(asistentes, id_class, id_question);
+        const values = formatStudentValues(attendes, id_class, id_question);
         await pool.query(text, values);
 
-        let io = socket.getSocket(); // Obtiene el websocket
-        // Emite a los estudiantes de la sala (se incluye) que un estudiante ganó
+        // Obtiene el websocket
+        let io = socket.getSocket(); 
+        // Emite a los estudiantes de la sala (se incluye) que un estudiante cambio de estado
         io.in(id_class + 'play-question-section')
             .emit('studentHasEnteredToTheClassroom', {
                 type: 2,
+                detail: 'UPDATE_STUDENT_STATUS',
                 id_user: id_user,
                 update_student_status: 5, // status 'ganador'
                 update_question_status: 5 // status 'sesión finalizada'

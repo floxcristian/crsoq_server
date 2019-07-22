@@ -119,7 +119,6 @@ npm run dev
  colors             | --                             | --
  cors               | --                             | --
  express-validator  | API parameter validation       |  Validate body, params, query, headers and cookies of a request (via middleware) and return a response with errors; if any of the configured validation rules fail. You won't anymore need to make your route handler dirty with such validations.
- http-status        | --                             | To set http status code. It is recommended to use httpStatus.INTERNAL_SERVER_ERROR instead of directly using 500 when setting status code.
  jsonwebtoken       | Authentication                 | Used to generate and verify authentication tokens.
  moment             | --                             | --
  nodemon            | Auto server restart            | Restart the server in real-time anytime an edit is made.
