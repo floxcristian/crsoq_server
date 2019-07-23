@@ -160,7 +160,7 @@ async function getAllQuestionsForLesson(req, res, next) {
             AND ($4::int IS NULL OR s.id_subcategory = $4)
             AND ($5::int IS NULL OR q.difficulty = $5)`;
         const values2 = [id_user, id_subject, id_category, id_subcategory, difficulty];
-        const { count} = (await pool.query(text2, values2)).rows[0];
+        const { count } = (await pool.query(text2, values2)).rows[0];
 
         res.send({
             info: {
@@ -260,7 +260,7 @@ const getQuestionByCourse = async (req, res, next) => {
 
 // Crea o elimina múltiples preguntas en una clase
 // + Asegurarse que una pregunta no este en otra clase?
-async function updateLessonQuestions(req, res, next) {
+const updateLessonQuestions = async (req, res, next) => {
     const client = await pool.pool.connect();
 
     try {
@@ -270,10 +270,7 @@ async function updateLessonQuestions(req, res, next) {
             delete_questions
         } = req.body;
 
-        console.log("add_works: ", add_questions);
-        console.log("delete_works: ", delete_questions);
-        // Inicia la transacción
-        client.query('BEGIN');
+        client.query('BEGIN'); // Inicia la transacción
 
         // Array para ejecutar consultas en paralelo
         let promises = [];
@@ -296,11 +293,10 @@ async function updateLessonQuestions(req, res, next) {
             promises.push(client.query(text, values));
         }
 
-        const result_update = await Promise.all(promises);
+        await Promise.all(promises);
 
         // Finaliza la transacción
         await client.query('COMMIT')
-
         res.json({})
 
     } catch (error) {
@@ -311,6 +307,34 @@ async function updateLessonQuestions(req, res, next) {
     } finally {
         client.release();
     }
+}
+
+const formatStudentValues = (array_students, id_class, id_question) => {
+    let values1 = []; // [id_user1, id_user2, id_user3]
+    let values2 = []; // [id_class, id_class, id_class]
+    let values3 = []; // [id_question, id_question, id_question]
+    let values4 = []; // [status1, status2, status3]
+
+    array_students.map((student) => {
+        values1.push(student.id_user);
+        values2.push(id_class);
+        values3.push(id_question);
+
+        // Formatea los estados
+        switch(student.participation_status){
+            case 2:
+            case 4:
+            case 5:
+                values4.push(student.participation_status);
+                break;
+            case 3: 
+                values4.push(2);
+                break;
+            default:
+                values4.push(1);
+        }
+    });
+    return [values1, values2, values3, values4];
 }
 
 
@@ -326,7 +350,7 @@ const updateLessonQuestion = async (req, res, next) => {
             id_class,
             id_question
         } = req.params;
-       
+
         let participants_overview;
 
         if (status == 1) { // Reinicia una pregunta (status 'no iniciada')
@@ -362,8 +386,17 @@ const updateLessonQuestion = async (req, res, next) => {
 
         } else if (status == 5) { // Finaliza una pregunta (status 'finalizada')
 
+            // Obtiene los participantes
             const participants = socket.getStudentParticipants(id_class);
-            //> Obtener un resumen de participantes
+
+            // Inserta el estado de cada estudiante participante
+            const text = `
+                INSERT INTO user_question_class(id_user, id_class, id_question, status)
+                SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[], $4::int[])`;
+            const values = formatStudentValues(participants, id_class, id_question);
+            await pool.query(text, values);
+
+            // Obteniene un resumen de participación
             const total = participants.length;
             const no_selected = participants.filter(student => (student.status === 2 || student.status == 3)).length;
             const losers = participants.filter(student => student.status === 4).length;

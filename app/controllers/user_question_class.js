@@ -4,7 +4,8 @@
 const pool = require('../database');
 var socket = require('../../index');
 
-const getStudents = async(req, res, next) => {
+// Obtiene participantes de una pregunta de clase
+const getStudents = async (req, res, next) => {
     try {
         const {
             id_class,
@@ -28,42 +29,94 @@ const getStudents = async(req, res, next) => {
     }
 }
 
-// Establece un estudiante perdedor
-const setLoserStudent = async (req, res, next) => {
+
+// Actualiza el estado de un participante
+const updateParticipantStatus = async (req, res, next) => {
 
     try {
         const {
-            loser_student, //>
+            id_user,
             id_class,
-            id_question
+            id_question,
+            status
         } = req.body;
-        const { id_user } = loser_student; //>
 
-         // Obtiene los asistentes de la clase
-         let attendes = socket.getStudentsInClassroom(id_class); 
-         // Busca al estudiante entre los asistentes
-         let index_student = attendes.findIndex(attende => attende.id_user == id_user); 
-         // Actualiza el estado del estudiante (si lo encuentra)
-         if (index_student >= 0) attendes[index_student].participation_status = 4; //> 
+        // Obtiene los asistentes de la clase
+        let attendes = socket.getStudentsInClassroom(id_class);
+        // Busca al estudiante entre los asistentes
+        let index_student = attendes.findIndex(attende => attende.id_user == id_user);
+        // Actualiza el estado del estudiante (si lo encuentra)
+        if (index_student >= 0) attendes[index_student].participation_status = status; 
 
         // Obtiene los participantes
         let participants = socket.getStudentParticipants(id_class);
         // Busca al perdedor entre los participantes
         let index_student = participants.findIndex(participant => participant.id_user == id_user);
         // Actualiza el estado del estudiante (si lo encuentra)
-        if(index_student >= 0) participants[index_student].status = 4; //>
+        if (index_student >= 0) participants[index_student].status = status; 
+
+        const new_question_status = 0; //>
 
         // Obtiene el websocket
-        let io = socket.getSocket(); 
+        let io = socket.getSocket();
         // Emite a los estudiantes de la sala (se incluye) que un estudiante cambio de estado
         io.in(id_class + 'play-question-section')
             .emit('studentHasEnteredToTheClassroom', {
                 type: 2,
                 detail: 'UPDATE_STUDENT_STATUS',
                 id_user: id_user,
-                update_student_status: 4, // status 'perdedor'
+                update_student_status: status,
+                update_question_status: new_question_status
+            });
+
+        res.json({
+            message: 'successfully update status'
+        });
+
+    } catch (error) {
+        next({
+            error
+        });
+    }
+}
+
+// Establece un estudiante perdedor
+const setLoserStudent = async (req, res, next) => {
+
+    try {
+        const {
+            student,
+            id_class,
+            id_question,
+            status
+        } = req.body;
+        const { id_user } = student;
+
+        // Obtiene los asistentes de la clase
+        let attendes = socket.getStudentsInClassroom(id_class);
+        // Busca al estudiante entre los asistentes
+        let index_student = attendes.findIndex(attende => attende.id_user == id_user);
+        // Actualiza el estado del estudiante (si lo encuentra)
+        if (index_student >= 0) attendes[index_student].participation_status = status; 
+
+        // Obtiene los participantes
+        let participants = socket.getStudentParticipants(id_class);
+        // Busca al perdedor entre los participantes
+        let index_student = participants.findIndex(participant => participant.id_user == id_user);
+        // Actualiza el estado del estudiante (si lo encuentra)
+        if (index_student >= 0) participants[index_student].status = status; 
+
+        // Obtiene el websocket
+        let io = socket.getSocket();
+        // Emite a los estudiantes de la sala (se incluye) que un estudiante cambio de estado
+        io.in(id_class + 'play-question-section')
+            .emit('studentHasEnteredToTheClassroom', {
+                type: 2,
+                detail: 'UPDATE_STUDENT_STATUS',
+                id_user: id_user,
+                update_student_status: status,
                 update_question_status: 3 // status 'seleccionando un estudiante'
-            }); 
+            });
 
         res.json({
             message: 'successfully update status'
@@ -87,7 +140,7 @@ Actualiza el estado del estudiante
 */
 
 /*
-Inserta los estados de cada estudiante asistente
+Inserta el estado de cada estudiante participante
         const text = `
             INSERT INTO user_question_class(id_user, id_class, id_question, status)
             SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[], $4::int[])`;
@@ -97,7 +150,7 @@ Inserta los estados de cada estudiante asistente
 
 // Establece un estudiante ganador
 // + Si ningún estudiante gana entonces no se establecen los estados de todos los participantes
-const setWinnerStudent = async(req, res, next) => {
+const setWinnerStudent = async (req, res, next) => {
     try {
 
         const {
@@ -108,14 +161,14 @@ const setWinnerStudent = async(req, res, next) => {
         const { id_user } = winner_student; //>
 
         // Obtiene los asistentes de la clase
-        let attendes = socket.getStudentsInClassroom(id_class); 
+        let attendes = socket.getStudentsInClassroom(id_class);
         // Busca al estudiante entre los asistentes
-        let index_student = attendes.findIndex(attende => attende.id_user == id_user); 
+        let index_student = attendes.findIndex(attende => attende.id_user == id_user);
         // Actualiza el estado del estudiante (si lo encuentra)
         if (index_student >= 0) attendes[index_student].participation_status = 5; //> 
-        
+
         // Obtiene el websocket
-        let io = socket.getSocket(); 
+        let io = socket.getSocket();
         // Emite a los estudiantes de la sala (se incluye) que un estudiante cambio de estado
         io.in(id_class + 'play-question-section')
             .emit('studentHasEnteredToTheClassroom', {
