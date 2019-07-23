@@ -26,7 +26,7 @@ const user_question_class = require('./user_question_class');
 // Define la app express
 const app = express();
 
-// Establece prefijos a las rutas
+// Definimos los middlewares de las rutas
 app.use(auth);
 app.use('/colors', colors);
 app.use('/users', users);

@@ -32,6 +32,7 @@ function initWebServer() {
     io = socket(httpServer);
     let num_connections = 0;
 
+    // Definimos los middlewares que modifican la request
     app.use(bodyParser.urlencoded({
         extended: false
     }));
@@ -256,7 +257,9 @@ function initWebServer() {
                 // Listener: sale de la sección de juego de la pregunta (como profesor)
                 socket.on('exitToPlayQuestionSectionRoomAsTeacher', (params) => {
 
-                    const { id_class } = params;
+                    const {
+                        id_class
+                    } = params;
 
                     socket.leave(id_class + 'teacher__play_question_section'); // Sale de la 'room' de profesores de la clase
 
@@ -275,7 +278,10 @@ function initWebServer() {
                 // Entra al conjunto de participantes por responder preguntas de la clase (siendo estudiante)
                 socket.on('enterToParticipantsToPlayQuestionSectionRoomAsStudent', async (params) => { // { id_class, user: { } }
 
-                    const { id_class, user } = params;
+                    const {
+                        id_class,
+                        user
+                    } = params;
 
                     // Se une a la 'room' de estudiantes que estan participando
                     socket.join(id_class + 'student__participant_to_play_question_section');
@@ -444,7 +450,11 @@ function initWebServer() {
                 // Listener: profesor selecciona estudiante para responder
                 socket.on('selectStudentToParticipate', async (params) => { // { id_user, id_class, id_question }
 
-                    const { id_user, id_class, id_question } = params;
+                    const {
+                        id_user,
+                        id_class,
+                        id_question
+                    } = params;
 
                     // Busca al estudiante 'seleccionado' entre los participantes
                     let index_participant = participants_of_a_question[id_class].findIndex(participant => participant.id_user == id_user);
@@ -455,7 +465,7 @@ function initWebServer() {
 
                     // Busca al estudiante seleccionado entre los que están conectados a la clase
                     let index_student = students_in_classrooms[id_class].findIndex(student => student.id_user == id_user);
-                                         // Actualiza el estado del estudiante a 'seleccionado' (si es que lo encuentra)
+                    // Actualiza el estado del estudiante a 'seleccionado' (si es que lo encuentra)
                     if (index_student >= 0) students_in_classrooms[id_class][index_student].participation_status = 3;
 
                     // Actualiza el estado de la pregunta de clase
@@ -468,9 +478,10 @@ function initWebServer() {
                     await pool.query(text, values);
 
                     //> AQUI CAMBIA!
-                    
+
                     // Emite a estudiantes de la sala que uno fue seleccionado
-                    socket.to(id_class + 'play-question-section').emit('studentSelectedToParticipate', {
+                    socket.to(id_class + 'play-question-section')
+                    .emit('studentSelectedToParticipate', {
                         id_user: id_user
                     });
 
@@ -481,7 +492,11 @@ function initWebServer() {
                 // Listener: profesor cancela la selección de un estudiante
                 socket.on('cancelSelectedStudentAsTeacher', async (params) => { // id_user, id_class, id_question
 
-                    const { id_user, id_class, id_question } = params;
+                    const {
+                        id_user,
+                        id_class,
+                        id_question
+                    } = params;
 
                     if (participants_of_a_question[id_class]) {
                         // Busca al estudiante 'cancelado' entre los participantes
@@ -518,11 +533,14 @@ function initWebServer() {
                         question_status: 3 // Estado de pregunta 'detenida'
                     });
 
-                    // Emiter: indica a estudiantes de la sala de clases que el profesor canceló la selección de un estudiante enviando la lista actualizada de estudiantes
-                    /*io.sockets.in(id_class + 'play-question-section')
-                        .emit('studentHasEnteredToTheClassroom',
-                            students_in_classrooms[id_class]
-                        );*/
+                    // Emite a estudiantes de la sala que uno fue seleccionado
+                    /*
+                    socket.to(id_class + 'play-question-section')
+                        .emit('studentSelectedToParticipate', {
+                            id_user: id_user
+                        });
+                    */
+
                     io.sockets.in(id_class + 'play-question-section')
                         .emit('studentHasEnteredToTheClassroom', {
                             type: 2,
@@ -531,15 +549,16 @@ function initWebServer() {
                             update_student_status: 2, // Estado de estudiante 'no seleccionado'
                             update_question_status: 3 // Estado de pregunta 'detenida'
                         });
-
-
                 });
 
 
                 // Estudiante sale de la sección de juego de la pregunta
                 socket.on('exitToPlayQuestionSectionRoomAsStudent', (params) => { // { id_class, id_user }
 
-                    const { id_class, id_user } = params;
+                    const {
+                        id_class,
+                        id_user
+                    } = params;
 
                     socket.leave(id_class + 'play-question-section'); // Deja la sala de juego de la clase
 

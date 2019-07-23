@@ -4,8 +4,8 @@
 const pool = require('../database');
 var socket = require('../../index');
 
-// Obtiene participantes de una pregunta de clase
-const getStudents = async (req, res, next) => {
+// Obtiene los participantes de una pregunta de clase
+const getParticipants = async (req, res, next) => {
     try {
         const {
             id_class,
@@ -139,20 +139,9 @@ Actualiza el estado del estudiante
         await pool.query(text, values);
 */
 
-/*
-Inserta el estado de cada estudiante participante
-        const text = `
-            INSERT INTO user_question_class(id_user, id_class, id_question, status)
-            SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[], $4::int[])`;
-        const values = formatStudentValues(attendes, id_class, id_question);
-        await pool.query(text, values);
-*/
-
 // Establece un estudiante ganador
-// + Si ningún estudiante gana entonces no se establecen los estados de todos los participantes
 const setWinnerStudent = async (req, res, next) => {
     try {
-
         const {
             winner_student, //>
             id_class,
@@ -190,30 +179,8 @@ const setWinnerStudent = async (req, res, next) => {
     }
 }
 
-
-const formatStudentValues = (array_students, id_class, id_question) => {
-    let values1 = []; // [id_user1, id_user2, id_user3]
-    let values2 = []; // [id_class, id_class, id_class]
-    let values3 = []; // [id_question, id_question, id_question]
-    let values4 = []; // [status1, status2, status3]
-
-    array_students.map((student) => {
-        values1.push(student.id_user);
-        values2.push(id_class);
-        values3.push(id_question);
-
-        // Formatea los estados
-        //> Ojo aquí
-        if (student.participation_status == 3) values4.push(2);
-        else if (student.participation_status == 4) values4.push(3);
-        else if (student.participation_status == 5) values4.push(4);
-        else values4.push(student.participation_status);
-    });
-    return [values1, values2, values3, values4];
-}
-
 module.exports = {
-    getStudents,
+    getParticipants,
     setWinnerStudent,
     setLoserStudent,
 }
