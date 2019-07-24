@@ -13,14 +13,15 @@ const colors = require('colors');
 const _routes = require('./app/routes/v1');
 const _error = require('./app/middlewares/error');
 const pool = require('./app/database');
-const participantsx = require('./app/routes/sockets').participantsx; //>
+const participantsx = require('./app/sockets').participantsx; //>
+//require('./app/sockets')(io, db); // Modulariza la lógica de los sockets
 
-let io;
 let connected_users = []; // { id_socket, ip } //> usar un object?
 let loggedin_users = []; // {id_user, id_socket, role} //> usar un object?
 let participants_of_a_question = {}; // { id_class : [...], id_class2: [...], id_class3: [...] }
 let students_in_classrooms = {}; // { id_class1 : [...], id_class2: [...], id_class3: [...] }
 let refresh_tokens = {}; // { refresh_token1: id_client1, refresh_token2: id_client2 }
+let io;
 
 initWebServer();
 
@@ -775,6 +776,8 @@ module.exports.resetStudentsInClassroomStatus = (id_class) => {
         });
     }
 }
+
+
 /*
 module.exports = {
     getSocket: () => io,
