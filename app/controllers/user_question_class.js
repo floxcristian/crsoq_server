@@ -51,7 +51,7 @@ const updateParticipantStatus = async (req, res, next) => {
         // Obtiene los participantes
         let participants = socket.getStudentParticipants(id_class);
         // Busca al perdedor entre los participantes
-        let index_student = participants.findIndex(participant => participant.id_user == id_user);
+        index_student = participants.findIndex(participant => participant.id_user == id_user);
         // Actualiza el estado del estudiante (si lo encuentra)
         if (index_student >= 0) participants[index_student].status = status; 
 
@@ -102,7 +102,7 @@ const setLoserStudent = async (req, res, next) => {
         // Obtiene los participantes
         let participants = socket.getStudentParticipants(id_class);
         // Busca al perdedor entre los participantes
-        let index_student = participants.findIndex(participant => participant.id_user == id_user);
+        index_student = participants.findIndex(participant => participant.id_user == id_user);
         // Actualiza el estado del estudiante (si lo encuentra)
         if (index_student >= 0) participants[index_student].status = status; 
 
