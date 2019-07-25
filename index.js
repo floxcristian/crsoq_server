@@ -28,7 +28,7 @@ initWebServer();
 // Init Web Server
 function initWebServer() {
 
-    const app = express(); // Instancia de express
+    const app = express(); // Crea una instancia de express
     const httpServer = http.Server(app); // Crea el server con http y express como handle request
     io = socket(httpServer); // Inicia el server de socket.io
     

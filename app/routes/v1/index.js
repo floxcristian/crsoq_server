@@ -2,7 +2,6 @@
 
 // Load modules
 const express = require('express');
-
 // Load routes
 const auth = require('./auth');
 const colors = require('./color');
