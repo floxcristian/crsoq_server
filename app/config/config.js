@@ -1,10 +1,10 @@
 // ============================
-// Puerto del servidor
+// Server Port
 // ============================
 process.env.PORT = process.env.PORT || 3000;
 
 // ============================
-// Entorno
+// Environment
 // ============================
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -23,7 +23,16 @@ process.env.REFRESH_TOKEN_EXPIRATION = '30 days'; // 30 días
 process.env.SEED = process.env.SEED || 'app-secret-seed';
 
 // ============================
-//  Base de Datos
+//  Auth0 Credentials
+// ============================
+const auth0 = {
+    CLIENT_ID: 1,
+    DOMAIN: 2,
+    
+};
+
+// ============================
+//  Postgres Database
 // ============================
 // + user: usuario de la base de datos ('postgres' es el usuario por defecto en postgres).
 // + host: ip del host de la base de datos. La ip local es 'localhost' o 127.0.0.1.

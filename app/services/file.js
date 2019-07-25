@@ -1,15 +1,11 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 
-// ----------------------------------------
 // Set Storage Configuration
-// ----------------------------------------
 function storageUpload(_storageDest) {
     return multer.diskStorage({
         destination: function (req, file, cb) {
@@ -21,10 +17,9 @@ function storageUpload(_storageDest) {
     });
 }
 
-// ----------------------------------------
+
 // Set File Extensions Configuration
 // + Fix new Error(). Send readable error!
-// ----------------------------------------
 function filterUpload(_extsAllowed) {
     return function (req, file, cb) {
         if (_extsAllowed.includes(file.mimeType)) {
@@ -34,9 +29,7 @@ function filterUpload(_extsAllowed) {
     };
 }
 
-// ----------------------------------------
-// Upload File Function
-// ----------------------------------------
+// Upload File
 function uploadFile(_storageDest, _extsAllowed, _fileSize, _fieldName) {
     return multer({
         storage: storageUpload(`uploads/${_storageDest}`),
@@ -47,17 +40,13 @@ function uploadFile(_storageDest, _extsAllowed, _fileSize, _fieldName) {
     }).single(_fieldName);
 }
 
-// ----------------------------------------
-// Delete File Function
-// ----------------------------------------
+
+// Delete File
 function deleteFile(file_path) {
     let global_path = path.resolve(__dirname, `../../${file_path}`);
     if (fs.existsSync(global_path)) fs.unlinkSync(global_path)
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     uploadFile,
     deleteFile

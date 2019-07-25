@@ -28,10 +28,10 @@ initWebServer();
 // Init Web Server
 function initWebServer() {
 
-    let app = express();
-    let httpServer = http.Server(app);
-    io = socket(httpServer);
-    let num_connections = 0;
+    const app = express(); // Instancia de express
+    const httpServer = http.Server(app); // Crea el server con http y express como handle request
+    io = socket(httpServer); // Inicia el server de socket.io
+    
 
     // Definimos los middlewares que modifican la request
     app.use(bodyParser.urlencoded({
@@ -46,9 +46,12 @@ function initWebServer() {
     app.use(_error.logErrors);
     app.use(_error.handler);
 
+    let num_connections = 0;
+
     (async () => {
         try {
 
+            // Inicia el servidor
             let server = await httpServer.listen(process.env.PORT);
 
             const address = server.address();
@@ -651,6 +654,7 @@ function initWebServer() {
             })
         } catch (error) {
             console.log(error);
+            process.exit(0); // Si ocurre un error matamos el proceso
         }
 
     })();

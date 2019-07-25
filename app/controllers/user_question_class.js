@@ -11,7 +11,6 @@ const getParticipants = async (req, res, next) => {
             id_class,
             id_question
         } = req.query;
-
         const text = `
             SELECT *
             FROM user_question_class AS uqc
