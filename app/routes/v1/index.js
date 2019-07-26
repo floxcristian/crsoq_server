@@ -1,49 +1,49 @@
 'use strict'
 
 // Load modules
-const express = require('express');
-// Load routes
-const auth = require('./auth');
-const colors = require('./color');
-const users = require('./user');
-const subjects = require('./subject');
-const calendars = require('./calendar');
-const categories = require('./category');
-const subcategories = require('./subcategory');
-const courses = require('./course');
-const questions = require('./question');
-const modules = require('./module');
-const enrollments = require('./enrollment');
-const workspaces = require('./workspace');
-const lessons = require('./lesson');
-const lessonQuestions = require('./lesson_question');
-const activities = require('./activity');
-const activityParticipation = require('./activity_participation');
-const images = require('./image');
-const user_question_class = require('./user_question_class');
+const express = require('express'),
+    auth = require('./auth'),
+    colors = require('./color'),
+    users = require('./user'),
+    subjects = require('./subject'),
+    calendars = require('./calendar'),
+    categories = require('./category'),
+    subcategories = require('./subcategory'),
+    courses = require('./course'),
+    questions = require('./question'),
+    modules = require('./module'),
+    enrollments = require('./enrollment'),
+    workspaces = require('./workspace'),
+    lessons = require('./lesson'),
+    lessonQuestions = require('./lesson_question'),
+    activities = require('./activity'),
+    activityParticipation = require('./activity_participation'),
+    images = require('./image'),
+    user_question_class = require('./user_question_class');
 
-// Define la app express
+// Define la app express+
 const app = express();
 
 // Definimos los middlewares de las rutas
-app.use(auth);
-app.use('/colors', colors);
-app.use('/users', users);
-app.use('/user_question_class', user_question_class);
-app.use('/subjects', subjects);
-app.use('/calendars', calendars);
-app.use('/categories', categories);
-app.use('/subcategories', subcategories);
-app.use('/courses', courses);
-app.use('/questions', questions);
-app.use('/modules', modules);
-app.use('/enrollments', enrollments);
-app.use('/workspaces', workspaces);
-app.use('/lessons', lessons);
-app.use('/lesson_questions', lessonQuestions);
-app.use('/activities', activities);
-app.use('/activity_participation', activityParticipation);
-app.use('/uploads', images);
+app
+    .use(auth)
+    .use('/colors', colors)
+    .use('/users', users)
+    .use('/user_question_class', user_question_class)
+    .use('/subjects', subjects)
+    .use('/calendars', calendars)
+    .use('/categories', categories)
+    .use('/subcategories', subcategories)
+    .use('/courses', courses)
+    .use('/questions', questions)
+    .use('/modules', modules)
+    .use('/enrollments', enrollments)
+    .use('/workspaces', workspaces)
+    .use('/lessons', lessons)
+    .use('/lesson_questions', lessonQuestions)
+    .use('/activities', activities)
+    .use('/activity_participation', activityParticipation)
+    .use('/uploads', images);
 
 // Server Status
 app.get('/status', (req, res) => res.send('OK'));
