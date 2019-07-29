@@ -27,8 +27,7 @@ process.env.SEED = process.env.SEED || 'app-secret-seed';
 // ============================
 const auth0 = {
     CLIENT_ID: 1,
-    DOMAIN: 2,
-    
+    DOMAIN: 2
 };
 
 // ============================

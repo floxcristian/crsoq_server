@@ -35,7 +35,7 @@ function initWebServer() {
 
     const app = express(); // Crea una instancia de express
     const httpServer = http.Server(app); // Crea el server con http y express como handle request
-    io = socket(httpServer); // Inicia el server de socket.io
+    io = socket(httpServer);
 
 
     // Middlewares
@@ -62,7 +62,10 @@ function initWebServer() {
             const server = await httpServer.listen(process.env.PORT);
             // Obtiene información del servidor
             const _address = server.address();
-            const { address, port } = _address;
+            const {
+                address,
+                port
+            } = _address;
             console.log(` ${colors.green.bold('[SUCCESS]')} webserver is running on ${address}${port}`);
 
             io.on('connection', (socket) => { // id, 
@@ -78,8 +81,8 @@ function initWebServer() {
                 console.log(`${colors.blue.bold('[INFO]'.padStart(10))} connected users: ${num_connections}`);
                 console.table(connected_users);
 
-                // Logueo de usuarios
-                socket.on('loggedInUser', async (data) => { // id_user, role
+                // Usuario inicia sesión
+                socket.on('loggedInUser', async (data) => { // { id_user, role }
 
                     console.log(`${colors.cyan.bold('[SOCKET]'.padStart(10))} on(loggedInUser):`);
                     console.table(data);
@@ -90,27 +93,20 @@ function initWebServer() {
                     } = data;
                     socket.id_user = id_user; //> Permite usar el 'id_user' en los otros 'socket'
 
-                    // Comprueba si ya existe una sesión con ese id_socket
-                    const session_exist = loggedin_users.find(user => user.id_socket == socket.id);
-
-                    //  Loguea al usuario (si la sesión no existe)
-                    if (!session_exist) addToLoggedInUsers(data, socket.id)
+                    // Verifica si existe una sesión con el actual 'id_socket'
+                    const session = loggedin_users.find(user => user.id_socket == socket.id);
+                    // Loguea al usuario (si la sesión no existe)
+                    if (!session) addToLoggedInUsers(data, socket.id);
                     else {
-                        // Si la sesión existe (id_socket), verifica si la sesión esta duplicada (id_user, role)
-                        const session_duplicated = loggedin_users.find(user => (user.id_user == id_user && user.role == role));
-
-                        // Actualiza la sesión (si existe)
-                        if (!session_duplicated) {
-                            console.log(` + user exist.\n + update user session data (id_user, role).\n`)
-                            session_exist.id_user = id_user;
-                            session_exist.role = role;
-                        }
+                        // Actualiza la sesión (si ya existe)
+                        session.id_user = id_user;
+                        session.role = role;
                     }
 
                     // Si el rol del usuario es estudiante
                     //> ARREGLAR LO DE ABAJO
                     // + Obtiene los cursos en los que esta inscrito el estudiante
-                    if (data.role == 3) {
+                    if (role == 3) {
                         const courses = await getStudentCourses(data.id_user);
                         // ... igual que en on.update()
                     }
@@ -135,8 +131,7 @@ function initWebServer() {
                     }*/
                 });
 
-
-                // Actualiza el role de un usuario logueado
+                // Actualiza el rol de un usuario logueado
                 socket.on('updateRoleToLoggedInUser', async (data) => { // { id_user, role}
 
                     const {
@@ -144,11 +139,11 @@ function initWebServer() {
                         role
                     } = data;
 
-                    // Ve si ya existe el usuario (id_socket)
-                    const user = loggedin_users.find(user => user.id_socket == socket.id);
-                     // Actualiza el rol (si esta logueado)
-                    if (user) user.role = role;
-                     else {
+                    // Verifica si existe una sesión con el actual 'id_socket'
+                    const session = loggedin_users.find(user => user.id_socket == socket.id);
+                    // Actualiza la sesión (si existe)
+                    if (session) session.role = role;
+                    else {
                         console.log(" + user (by id_socket) doesn't exist. Add user.");
                         // Aqui la cago porque agrego un usuario sin id_user y porque este evento se ejecuta primero que el connected_user
                         addToLoggedInUsers(data, socket.id);
@@ -159,20 +154,14 @@ function initWebServer() {
 
                     //socket.emit('usersConnectedHasChanged', getusersConnected());
 
-                    // Si el role del usuario es estudiante
-                    // + Obtiene los cursos en los que esta inscrito
+
                     if (role == 3) {
+                        // Obtiene los cursos en los que esta inscrito (si es estudiante)
                         const courses = await getStudentCourses(id_user);
-
                         console.log(" + obtiene cursos del usuario estudiante: ", courses);
-
-                        // Une al usuario a las salas de cada curso en el que esta inscrito
-                        courses.forEach(course => {
-                            //console.log("COURSE: ", course.id_course)
-                            socket.join(course.id_course + 'students');
-                        });
+                        // Une al estudiante a las salas de cada curso en el que esta inscrito
+                        courses.forEach(course => socket.join(course.id_course + 'students'));
                         console.log(" + une al estudiante a las salas: ", socket.rooms, '\n');
-                        //console.log(socket.rooms);
                     }
 
                 });
@@ -194,7 +183,9 @@ function initWebServer() {
                 // Entrar a la sección clase (siendo estudiante)
                 socket.on('enterToClassSectionRoomAsStudent', (params) => {
 
-                    const { id_course } = params;
+                    const {
+                        id_course
+                    } = params;
                     socket.join(id_course + 'class-section-room');
 
                     console.log(`${colors.cyan.bold('[SOCKET]'.padStart(10))} on(enterToClassSectionRoomAsStudent).`);
@@ -274,7 +265,6 @@ function initWebServer() {
                         if (error) throw error;
                         console.table(clients);
                     });
-                    // Emite a otros estudiantes que salio de la sala...
                 });
 
 
@@ -400,8 +390,6 @@ function initWebServer() {
                         });
                 });
 
-
-                // { id_user, id_class, id_question, status }
                 socket.on('updateParticipantStatus', async (params) => {
 
                     const {
@@ -412,19 +400,37 @@ function initWebServer() {
                         sender
                     } = params;
 
-                    let new_question_status;
+                    let question_status;
+                    if(sender == 'STUDENT'){
+                        // + estudiante decide participar (status 2)
+                        if(status == 2) question_status = 2; // iniciada
+                        // + estudiante cancela su participación (status 1)
+                        else if(status == 1) question_status = 2; // iniciada
+                    }
+                    else if(sender == 'TEACHER'){
+                        // + profesor selecciona estudiante (status 3)
+                        if(status == 3) question_status = 4; // respondiendo
+                        // + profesor cancela la selección de estudiante (status 2)
+                        else if(status == 2) question_status = 3; // detenida
+                        // + profesor establece estudiante perdedor (status 4)
+                        else if(status == 4) question_status = 3; // detenida
+                        // + profesor establece estudiante ganador (status 5)
+                        else if(status == 5) question_status = 5; // finalizada
+                    }
+
+                    let question_status;
                     switch (status) {
-                        case 1:
-                            new_question_status = 2;
+                        case 1: // en espera
+                            question_status = 2; // iniciada
                             break;
-                        case 2:
-                            new_question_status = 3;
+                        case 2: // no seleccionado // depende
+                            question_status = 3; // detenida
                             break;
-                        case 3:
-                            new_question_status = 4;
+                        case 3: // seleccionado
+                            question_status = 4; // respondiendo
                             break;
                         default:
-                            new_question_status = 1;
+                            question_status = 1; // no iniciada
                             break;
                     }
 
@@ -457,10 +463,9 @@ function initWebServer() {
                                             SET status = $1 
                                             WHERE id_class = $2 
                                             AND id_question = $3`;
-                                        const values = [new_question_status, id_class, id_question];
+                                        const values = [question_status, id_class, id_question];
                                         await pool.query(text, values);
-                                    }
-                                    else if(sender == 'STUDENT'){
+                                    } else if (sender == 'STUDENT') {
                                         // Se une a la 'room' de estudiantes que estan participando
                                         socket.join(id_class + 'student__participant_to_play_question_section');
                                     }
@@ -492,7 +497,7 @@ function initWebServer() {
                             id_user: id_user,
                             id_question: id_question,
                             student_status: status,
-                            question_status: new_question_status
+                            question_status: question_status
                         });
 
                 });
@@ -515,7 +520,7 @@ function initWebServer() {
                         // Elimina al estudiante de entre los asistentes (si lo encuentra)
                         if (index_student >= 0) students_in_classrooms[id_class].splice(index_student, 1);
 
-                        // Emiter: indica a otros estudiantes que un estudiante salío de la sala
+                        // Emiter: a otros estudiantes que un estudiante salío de la sala
                         socket.to(id_class + 'play-question-section')
                             .emit('studentHasEnteredToTheClassroom', {
                                 type: 5,
@@ -595,16 +600,18 @@ function addToConnectedUsers(id_socket, ip) {
 }
 
 
-
-async function getStudentCourses(id_user) {
+// Obtiene los cursos en los que esta inscrito un estudiante
+const getStudentCourses = async (id_user) => {
     const text = `
-    SELECT id_course
-    FROM course_user AS cu
-    WHERE id_user = $1
-    AND active = TRUE`;
+        SELECT id_course
+        FROM course_user AS cu
+        WHERE id_user = $1
+        AND active = TRUE`;
     const values = [id_user];
-    const courses = (await pool.query(text, values)).rows;
-    return courses;
+    const {
+        rows
+    } = (await pool.query(text, values));
+    return rows;
 }
 
 // Actualiza los datos de un usuario conectado
