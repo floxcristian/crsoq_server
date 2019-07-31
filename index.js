@@ -247,7 +247,6 @@ function initWebServer() {
 
                 });
 
-
                 // Listener: sale de la sección de juego de la pregunta (como profesor)
                 socket.on('exitToPlayQuestionSectionRoomAsTeacher', (params) => {
                     const {
@@ -266,9 +265,6 @@ function initWebServer() {
                         console.table(clients);
                     });
                 });
-
-
-
 
                 // Estudiante ingresa a la sala de clase para responder preguntas
                 // + { id_class , user: { id_user, username, name, last_name, middle_name, profile_image } }
@@ -336,7 +332,6 @@ function initWebServer() {
 
                 socket.on('updateParticipantStatus', async (params) => {
 
-                    console.log("updateParticipantStatus: ", params)
                     const {
                         id_user,
                         id_class,
@@ -345,8 +340,6 @@ function initWebServer() {
                         sender
                     } = params;
 
-                    //> Estudiante decide participar solo envía id_class y user. Falta id_user,id_question, status, sender
-
                     // Crea el array 'student_participants' (si no existe)
                     if (!participants_of_a_question[id_class]) participants_of_a_question[id_class] = [];
                     // Busca al estudiante entre los participantes
@@ -354,11 +347,19 @@ function initWebServer() {
 
                     let question_status;
                     if (sender == 'STUDENT') {
+                        
+                        question_status = 2; // iniciada
                         // + estudiante decide participar (status 2)
                         if (status == 2) {
+          
+                            const text = `
+                                SELECT id_user, name, last_name, middle_name, document
+                                FROM USERS
+                                WHERE id_user = $1`;
+                            const values = [id_user];
+                            const user = await(pool.query(text, values));
+                            //>
 
-                            const { user } = params; // Se puede obtener de la db con el id_user también
-                            question_status = 2; // iniciada
                             // Se une a la 'room' de estudiantes que estan participando
                             socket.join(id_class + 'student__participant_to_play_question_section');
                             // Agrega el 'id_socket' y el 'status' al objeto user
@@ -376,9 +377,7 @@ function initWebServer() {
 
                         }
                         // + estudiante cancela su participación (status 1)
-                        else if (status == 1) {
-
-                            question_status = 2; // iniciada                    
+                        else if (status == 1) {                   
                             // Elimina al participante
                             participants_of_a_question[id_class].splice(index_participant, 1);
                             // Estudiante deja la 'room'
@@ -391,8 +390,7 @@ function initWebServer() {
                             });
 
                         }
-                    }
-                    else if (sender == 'TEACHER') {
+                    } else if (sender == 'TEACHER') {
                         // + profesor selecciona estudiante (status 3)
                         if (status == 3) question_status = 4; // respondiendo
                         // + profesor cancela la selección de estudiante (status 2)
@@ -411,7 +409,7 @@ function initWebServer() {
                         const values = [question_status, id_class, id_question];
                         await pool.query(text, values);
 
-                        // Actualiza el estado del participante
+                        // Actualiza el estado del participante (si lo encuentra)
                         if (index_participant >= 0) participants_of_a_question[id_class][index_participant].status = status;
                     }
 
@@ -434,7 +432,6 @@ function initWebServer() {
                             student_status: status,
                             question_status: question_status
                         });
-
                 });
 
 
