@@ -357,9 +357,8 @@ function initWebServer() {
                                 FROM USERS
                                 WHERE id_user = $1`;
                             const values = [id_user];
-                            const user = await(pool.query(text, values));
-                            //>
-
+                            const user = (await pool.query(text, values)).rows[0];
+        
                             // Se une a la 'room' de estudiantes que estan participando
                             socket.join(id_class + 'student__participant_to_play_question_section');
                             // Agrega el 'id_socket' y el 'status' al objeto user

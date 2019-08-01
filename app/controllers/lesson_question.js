@@ -319,13 +319,12 @@ const formatStudentValues = (array_students, id_class, id_question) => {
         values1.push(student.id_user);
         values2.push(id_class);
         values3.push(id_question);
-
         // Formatea los estados
-        switch(student.participation_status){
+        switch(student.status){
             case 2:
             case 4:
             case 5:
-                values4.push(student.participation_status);
+                values4.push(student.status);
                 break;
             case 3: 
                 values4.push(2);
@@ -388,7 +387,6 @@ const updateLessonQuestion = async (req, res, next) => {
 
             // Obtiene los participantes
             const participants = socket.getStudentParticipants(id_class);
-
             // Inserta el estado de cada estudiante participante
             const text = `
                 INSERT INTO user_question_class(id_user, id_class, id_question, status)
@@ -401,7 +399,7 @@ const updateLessonQuestion = async (req, res, next) => {
             const no_selected = participants.filter(student => (student.status === 2 || student.status == 3)).length;
             const losers = participants.filter(student => student.status === 4).length;
             const winner = participants.find(student => student.status == 5) || null;
-            const winner_name = winner ? (`${winner.name} ${winner.lastname} ${winner.middle_name}`) : '--';
+            const winner_name = winner ? (`${winner.name} ${winner.last_name} ${winner.middle_name}`) : '--';
 
             participants_overview = {
                 no_selected, losers, winner_name, total
