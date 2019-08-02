@@ -104,7 +104,7 @@ const getTotalEndedClassQuestions = async (req, res, next) => {
         // Total de preguntas realizadas en una clase
         const text = `
             SELECT count(*)
-            FROM class_questions
+            FROM class_question
             WHERE id_class = $1
             AND status = 5`;
         const values = [id_lesson];
@@ -113,7 +113,7 @@ const getTotalEndedClassQuestions = async (req, res, next) => {
         // Total de preguntas realizadas en el semestre para un curso
         const text2 = `
             SELECT count(*)
-            FROM class_questions AS cq
+            FROM class_question AS cq
             INNER JOIN classes AS c
             ON cq.id_class = c.id_class
             INNER JOIN modules AS m
@@ -127,20 +127,35 @@ const getTotalEndedClassQuestions = async (req, res, next) => {
         const text3 = `
             SELECT count(*)
             FROM user_question_class AS uqc
-            INNER JOIN class_questions AS cq
+            INNER JOIN class_question AS cq
             ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
-            WHERE cq.id_class = $1
+            WHERE uqc.id_class = $1
             AND uqc.id_user = $2
             AND cq.status = 5`;
         const values3 = [id_class, id_user];
 
         // Total de participaciones en preguntas de un estudiante en un curso
-        //>
         const text4 = `
             SELECT count(*)
-            FROM 
-            WHERE `;
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            INNER JOIN classes AS c
+            ON cq.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE m.id_course = $1
+            AND cq.status = 5
+            AND uqc.id_user = $2`;
         const values4 = [id_course, id_user];
+
+        // Total de 'no participaciones' de un estudiante en una clase
+        // Debo verificar que no exista el registro en user_question_class
+        //>
+        const text5 = `
+            SELECT count(*)
+            FROM `;
+        const values5 = [];
 
     } catch (error) {
         next({
@@ -440,12 +455,28 @@ const updateLessonQuestion = async (req, res, next) => {
 
             // Obtiene los participantes
             const participants = socket.getStudentParticipants(id_class);
-            // Inserta el estado de cada estudiante participante
+
+            // Obtiene los estudiantes inscritos al curso
             const text = `
+                SELECT id_user
+                FROM course_user
+                WHERE id_course = $1`;
+            const values = [id_course];
+            const enrolled_students = (await pool.query(text, values)).rows;
+
+            //> Verificar que estudiantes no participaron
+            participants.forEach((participant)=> {
+
+            });
+
+
+            // Inserta el estado de cada estudiante participante
+            //> Debería insertar de incluso los que no participaron???
+            const text2 = `
                 INSERT INTO user_question_class(id_user, id_class, id_question, status)
                 SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[], $4::int[])`;
-            const values = formatStudentValues(participants, id_class, id_question);
-            await pool.query(text, values);
+            const values2 = formatStudentValues(participants, id_class, id_question);
+            await pool.query(text2, values2);
 
             // Obteniene un resumen de participación
             const total = participants.length;
