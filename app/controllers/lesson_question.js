@@ -7,7 +7,7 @@ const _file = require('../services/file');
 var socket = require('../../index');
 
 
-// Obtiene las preguntas que ya han sido agregadas a la clase.
+// Obtiene las preguntas que ya han sido agregadas a cierta clase
 // + Enviar atributo winners: true/false
 const getLessonQuestions = async (req, res, next) => {
 
@@ -42,7 +42,7 @@ const getLessonQuestions = async (req, res, next) => {
                 FROM user_question_class
                 WHERE id_question = q.id_question
                 AND id_class = cq.id_class
-                AND status = 4
+                AND status = 5
             ) THEN TRUE ELSE FALSE END AS winners
             FROM questions AS q
             INNER JOIN class_question AS cq
@@ -96,6 +96,59 @@ const getLessonQuestions = async (req, res, next) => {
         });
     }
 }
+
+const getTotalEndedClassQuestions = async (req, res, next) => {
+    try {
+        const { id_lesson } = req.query;
+
+        // Total de preguntas realizadas en una clase
+        const text = `
+            SELECT count(*)
+            FROM class_questions
+            WHERE id_class = $1
+            AND status = 5`;
+        const values = [id_lesson];
+        const { count } = (await pool.query(text, values)).rows[0];
+
+        // Total de preguntas realizadas en el semestre para un curso
+        const text2 = `
+            SELECT count(*)
+            FROM class_questions AS cq
+            INNER JOIN classes AS c
+            ON cq.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE m.id_course = $1 
+            AND cq.status = 5`;
+        const values2 = [id_course];
+        const { count } = (await pool.query(text2, values2)).rows[0];
+
+        // Total de participaciones en preguntas de un estudiante en una clase
+        const text3 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_questions AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            WHERE cq.id_class = $1
+            AND uqc.id_user = $2
+            AND cq.status = 5`;
+        const values3 = [id_class, id_user];
+
+        // Total de participaciones en preguntas de un estudiante en un curso
+        //>
+        const text4 = `
+            SELECT count(*)
+            FROM 
+            WHERE `;
+        const values4 = [id_course, id_user];
+
+    } catch (error) {
+        next({
+            error
+        });
+    }
+}
+
 
 // Obtiene las preguntas de la biblioteca de la asignatura e indica cuales han sido agregadas a la clase.
 async function getAllQuestionsForLesson(req, res, next) {
@@ -320,13 +373,13 @@ const formatStudentValues = (array_students, id_class, id_question) => {
         values2.push(id_class);
         values3.push(id_question);
         // Formatea los estados
-        switch(student.status){
+        switch (student.status) {
             case 2:
             case 4:
             case 5:
                 values4.push(student.status);
                 break;
-            case 3: 
+            case 3:
                 values4.push(2);
                 break;
             default:
