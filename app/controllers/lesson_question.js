@@ -97,9 +97,13 @@ const getLessonQuestions = async (req, res, next) => {
     }
 }
 
-const getTotalEndedClassQuestions = async (req, res, next) => {
+const getSummaryStudentParticipation = async (req, res, next) => {
     try {
-        const { id_lesson } = req.query;
+        const { id_user, id_lesson } = req.query;
+
+        /*
+        // Obtener el 'id_course' a partir del 'id_lesson'
+        let promises = []; // Array para ejecutar consultas en paralelo
 
         // Total de preguntas realizadas en una clase
         const text = `
@@ -108,10 +112,75 @@ const getTotalEndedClassQuestions = async (req, res, next) => {
             WHERE id_class = $1
             AND status = 5`;
         const values = [id_lesson];
-        const { count } = (await pool.query(text, values)).rows[0];
+        promises.push(client.query(text, values)); // Agrega la query al array 'promises'
+
+        // Total de 'participaciones' de un estudiante en una clase
+        const text2 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            WHERE uqc.id_class = $1
+            AND uqc.id_user = $2
+            AND uqc.status != 1
+            AND cq.status = 5`;
+        const values2 = [id_lesson, id_user];
+        promises.push(client.query(text2, values2)); // Agrega la query al array 'promises'
+
+        // Total de 'no participaciones' de un estudiante en una clase
+        const text3 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            WHERE uqc.id_class = $1
+            AND uqc.id_user = $2
+            AND uqc.status = 1
+            AND cq.status = 5`;
+        const values3 = [id_lesson, id_user];
+        promises.push(client.query(text3, values3)); // Agrega la query al array 'promises'
+
+        // Total de 'ganadas' de un estudiante en una clase
+        const text4 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            WHERE uqc.id_class = $1
+            AND uqc.id_user = $2
+            AND uqc.status = 5
+            AND cq.status = 5`;
+        const values4 = [id_lesson, id_user];
+        promises.push(client.query(text4, values4)); // Agrega la query al array 'promises'
+
+        // Total de 'perdidas' de un estudiante en una clase
+        const text5 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            WHERE uqc.id_class = $1
+            AND uqc.id_user = $2
+            AND uqc.status = 4
+            AND cq.status = 5`;
+        const values5 = [id_lesson, id_user];
+        promises.push(client.query(text5, values5)); // Agrega la query al array 'promises'
+
+        // Total de 'no seleccionado' de un estudiante en una clase
+        const text6 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            WHERE uqc.id_class = $1
+            AND uqc.id_user = $2
+            AND uqc.status = 2
+            AND cq.status = 5`;
+        const values6 = [id_lesson, id_user];
+        promises.push(client.query(text6, values6)); // Agrega la query al array 'promises'
 
         // Total de preguntas realizadas en el semestre para un curso
-        const text2 = `
+        const text7 = `
             SELECT count(*)
             FROM class_question AS cq
             INNER JOIN classes AS c
@@ -120,22 +189,11 @@ const getTotalEndedClassQuestions = async (req, res, next) => {
             ON c.id_module = m.id_module
             WHERE m.id_course = $1 
             AND cq.status = 5`;
-        const values2 = [id_course];
-        const { count } = (await pool.query(text2, values2)).rows[0];
+        const values7 = [id_course];
+        promises.push(client.query(text7, values7)); // Agrega la query al array 'promises'
 
-        // Total de participaciones en preguntas de un estudiante en una clase
-        const text3 = `
-            SELECT count(*)
-            FROM user_question_class AS uqc
-            INNER JOIN class_question AS cq
-            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
-            WHERE uqc.id_class = $1
-            AND uqc.id_user = $2
-            AND cq.status = 5`;
-        const values3 = [id_class, id_user];
-
-        // Total de participaciones en preguntas de un estudiante en un curso
-        const text4 = `
+        // Total de 'participaciones' de un estudiante en un curso
+        const text7 = `
             SELECT count(*)
             FROM user_question_class AS uqc
             INNER JOIN class_question AS cq
@@ -146,17 +204,81 @@ const getTotalEndedClassQuestions = async (req, res, next) => {
             ON c.id_module = m.id_module
             WHERE m.id_course = $1
             AND cq.status = 5
-            AND uqc.id_user = $2`;
-        const values4 = [id_course, id_user];
+            AND uqc.id_user = $2
+            AND uqc.status != 1`;
+        const values7 = [id_course, id_user];
 
-        // Total de 'no participaciones' de un estudiante en una clase
-        // Debo verificar que no exista el registro en user_question_class
-        //>
-        const text5 = `
+        // Total de 'no participaciones' de un estudiante en un curso
+        const text8 = `
             SELECT count(*)
-            FROM `;
-        const values5 = [];
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            INNER JOIN classes AS c
+            ON cq.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE m.id_course = $1
+            AND cq.status = 5
+            AND uqc.id_user = $2
+            AND uqc.status = 1`;
+        const values8 = [id_course, id_user];
+        promises.push(client.query(text8, values8)); // Agrega la query al array 'promises'
 
+        // Total de 'ganadas' de un estudiante en un curso
+        const text9 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            INNER JOIN classes AS c
+            ON cq.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE m.id_course = $1
+            AND cq.status = 5
+            AND uqc.id_user = $2
+            AND uqc.status = 5`;
+        const values9 = [id_course, id_user];
+        promises.push(client.query(text9, values9)); // Agrega la query al array 'promises'
+
+        // Total de 'perdidas' de un estudiante en un curso
+        const text10 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            INNER JOIN classes AS c
+            ON cq.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE m.id_course = $1
+            AND cq.status = 5
+            AND uqc.id_user = $2
+            AND uqc.status = 4`;
+        const values10 = [id_course, id_user];
+        promises.push(client.query(text10, values10)); // Agrega la query al array 'promises'
+
+        // Total de 'no seleccionado' de un estudiante en un curso
+        const text11 = `
+            SELECT count(*)
+            FROM user_question_class AS uqc
+            INNER JOIN class_question AS cq
+            ON (uqc.id_class = cq.id_class AND uqc.id_question = cq.id_question)
+            INNER JOIN classes AS c
+            ON cq.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE m.id_course = $1
+            AND cq.status = 5
+            AND uqc.id_user = $2
+            AND uqc.status = 2`;
+        const values11 = [id_course, id_user];
+        promises.push(client.query(text11, values11)); // Agrega la query al array 'promises'
+
+        const rows = await Promise.all(promises); // Ejecuta consultas en paralelo
+        console.log("rows: ", rows);
+        */
     } catch (error) {
         next({
             error
@@ -381,7 +503,7 @@ const formatStudentValues = (array_students, id_class, id_question) => {
     let values1 = []; // [id_user1, id_user2, id_user3]
     let values2 = []; // [id_class, id_class, id_class]
     let values3 = []; // [id_question, id_question, id_question]
-    let values4 = []; // [status1, status2, status3]
+    let values4 = []; // [status1, status2, status3] 
 
     array_students.map((student) => {
         values1.push(student.id_user);
@@ -456,27 +578,49 @@ const updateLessonQuestion = async (req, res, next) => {
             // Obtiene los participantes
             const participants = socket.getStudentParticipants(id_class);
 
-            // Obtiene los estudiantes inscritos al curso
+            // Obtiene el 'id_course' a partir del 'id_class'
             const text = `
+                SELECT m.id_course
+                FROM modules AS m
+                INNER JOIN classes AS c
+                ON m.id_module = c.id_module
+                WHERE c.id_class = $1`;
+            const values = [id_class];
+            const { id_course } = (await pool.query(text, values)).rows[0];
+
+            // Obtiene los estudiantes inscritos al curso
+            const text2 = `
                 SELECT id_user
                 FROM course_user
                 WHERE id_course = $1`;
-            const values = [id_course];
-            const enrolled_students = (await pool.query(text, values)).rows;
+            const values2 = [id_course];
+            const enrolled_students = (await pool.query(text2, values2)).rows;
 
-            //> Verificar que estudiantes no participaron
-            participants.forEach((participant)=> {
+            console.log("enrolled students: ", enrolled_students);
 
+
+            participants.forEach((participant) => {
+
+                // Verifica si el estudiante participó
+                const index_student = enrolled_students.findIndex(student => student.id_user == participant.id_user);
+                // Elimina al estudiante participante (si participó)
+                if (index_student >= 0) enrolled_students.splice(index_student, 1);
             });
 
+            // Incorporá a los estudiantes que no participarón
+            enrolled_students.forEach((student) => {
+                participants.push({
+                    id_user: student.id_user,
+                    status: 1
+                });
+            });
 
             // Inserta el estado de cada estudiante participante
-            //> Debería insertar de incluso los que no participaron???
-            const text2 = `
+            const text3 = `
                 INSERT INTO user_question_class(id_user, id_class, id_question, status)
                 SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[], $4::int[])`;
-            const values2 = formatStudentValues(participants, id_class, id_question);
-            await pool.query(text2, values2);
+            const values3 = formatStudentValues(participants, id_class, id_question);
+            await pool.query(text3, values3);
 
             // Obteniene un resumen de participación
             const total = participants.length;
@@ -751,7 +895,8 @@ module.exports = {
     getQuestionByCourse,
     updateLessonQuestions,
     updateLessonQuestion,
-    deleteClassQuestion
+    deleteClassQuestion,
+    getSummaryStudentParticipation
 }
 
 /*

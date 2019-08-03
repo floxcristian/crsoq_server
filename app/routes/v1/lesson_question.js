@@ -10,6 +10,7 @@ var api = express.Router();
 api.get('/', classQuestionCtrl.getLessonQuestions);
 api.get('/all', classQuestionCtrl.getAllQuestionsForLesson);
 api.get('/course_questions', classQuestionCtrl.getCourseQuestions);
+api.get('/student_summary', classQuestionCtrl.getSummaryStudentParticipation)
 api.get('/course/:id_course', classQuestionCtrl.getQuestionByCourse);
 //api.get('/select_options', _questionController.getQuestionOptions); //Opciones para el Selector
 //api.get('/:userId', colorController.getColorsByUserId);
