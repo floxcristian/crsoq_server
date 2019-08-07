@@ -519,36 +519,38 @@ function initWebServer() {
                             const result = await Promise.all(promises); // Ejecuta consultas en paralelo
                             console.log("caca: ", result);
 
-                            /*
-                            const class_questions = result[0].rows[0].count;
-                            const course_questions = result[1].rows[0].count;
+                            
+                            const class_questions = parseInt(result[0].rows[0].count);
+                            const course_questions = parseInt(result[1].rows[0].count);
 
-                            const total_class_student_winner = result[4].rows[0].count;
-                            const total_class_student_losser = result[5].rows[0].count;
-                            const total_class_student_not_selected = result[6].rows[0].count;
+                            const class_student_winner = parseInt(result[2].rows[0].count);
+                            const class_student_losser = parseInt(result[3].rows[0].count);
+                            const class_student_not_selected = parseInt(result[4].rows[0].count);
 
-                            const total_class_student_participations = total_class_student_winner + total_class_student_losser + total_class_student_not_selected;
-                            const total_class_student_no_participations = total_class_questions - total_class_student_participations;
+                            const class_student_participations = class_student_winner + class_student_losser + class_student_not_selected;
+                            const class_student_no_participations = class_questions - class_student_participations;
 
-                            const total_course_student_winner = result[4].rows[0].count;
-                            const total_course_student_losser = result[4].rows[0].count;
-                            const total_course_student_not_selected = result[4].rows[0].count;
+                            const course_student_winner = parseInt(result[5].rows[0].count);
+                            const course_student_losser = parseInt(result[6].rows[0].count);
+                            const course_student_not_selected = parseInt(result[7].rows[0].count);
 
-                            const total_course_student_participations = total_course_student_participations + total_course_student_losser + total_course_student_not_selected;
-                            const total_course_student_no_participations = total_course_questions - total_course_student_participations;
+                            const course_student_participations = course_student_winner + course_student_losser + course_student_not_selected;
+                            const course_student_no_participations = course_questions - course_student_participations;
 
-                            */
+                            
                             user.student_overview = {
-                                class_questions: result[0].rows[0].count,
-                                course_questions: result[1].rows[0].count,
-                                class_student_participations: result[2].rows[0].count,
-                                class_student_no_participations: result[3].rows[0].count,
-                                class_student_winner: result[4].rows[0].count,
-                                class_student_losser: result[5].rows[0].count,
-                                class_student_not_selected: result[6].rows[0].count,
-                                course_student_participations: result[7].rows[0].count,
-                                course_student_no_participations: result[8].rows[0].count,
-                                course_student_winner: result[9].rows[0].count,
+                                class_questions,
+                                course_questions,
+                                class_student_participations,
+                                class_student_no_participations,
+                                class_student_winner,
+                                class_student_losser,
+                                class_student_not_selected,
+                                course_student_participations,
+                                course_student_no_participations,
+                                course_student_winner,
+                                course_student_losser,
+                                course_student_not_selected
                             }
 
                             //>

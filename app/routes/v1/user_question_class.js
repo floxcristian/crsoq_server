@@ -7,6 +7,6 @@ const { userQuestionClassCtrl } = require('../../controllers');
 var api = express.Router();
 
 // Routes and controllers
-api.get('/', userQuestionClassCtrl.getParticipants);
+api.get('/', userQuestionClassCtrl.getQuestionParticipation);
 
 module.exports = api;

@@ -601,22 +601,22 @@ const updateLessonQuestion = async (req, res, next) => {
             console.log("enrolled students: ", enrolled_students);
 
 
-            /*
+            
             participants.forEach((participant) => {
 
                 // Verifica si el estudiante participó
                 const index_student = enrolled_students.findIndex(student => student.id_user == participant.id_user);
                 // Elimina al estudiante participante (si participó)
                 if (index_student >= 0) enrolled_students.splice(index_student, 1);
-            });*/
+            });
 
             // Incorporá a los estudiantes que no participarón
-            /*enrolled_students.forEach((student) => {
+            enrolled_students.forEach((student) => {
                 participants.push({
                     id_user: student.id_user,
                     status: 1
                 });
-            });*/
+            });
 
             // Inserta el estado de cada estudiante participante
             const text3 = `
