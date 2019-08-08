@@ -164,8 +164,8 @@ const countCalendar = async (req, res, next) => {
 
     try {
         const text = `
-            SELECT count(*) FROM 
-            calendars`;
+            SELECT count(*) 
+            FROM calendars`;
         const {
             count
         } = (await pool.query(text)).rows[0];

@@ -21,7 +21,7 @@ function rejectRefreshToken(req, res, next) {
 
 }
 
-async function login(req, res, next) {
+const login = async (req, res, next) => {
     try {
 
         const {
@@ -30,9 +30,9 @@ async function login(req, res, next) {
         } = req.body;
 
         const text = `
-        SELECT id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at 
-        FROM users 
-        WHERE email = $1`;
+            SELECT id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at 
+            FROM users 
+            WHERE email = $1`;
         const values = [email];
         const {
             rows
@@ -56,10 +56,10 @@ async function login(req, res, next) {
         }
 
         const text2 = `
-        SELECT role 
-        FROM roles 
-        WHERE id_user = $1 
-        ORDER BY role`;
+            SELECT role 
+            FROM roles 
+            WHERE id_user = $1 
+            ORDER BY role`;
         const values2 = [user.id_user];
         const roles = (await pool.query(text2, values2)).rows.map(role => role.role);
         user.roles = roles;

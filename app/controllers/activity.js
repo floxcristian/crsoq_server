@@ -58,7 +58,7 @@ const getActivities = async (req, res, next) => {
 
         const from = (page - 1) * page_size; // Calcula el 'from' a partir de los params 'page' y 'page_size'
 
-        // Obtiene las Actividades por ID Curso (Parámetros de Filtro Opcionales)
+        // Obtiene las Actividades por ID Curso (parámetros de filtro opcionales)
         // En una parte utiliza status = 2 para mostrar si en una actividad hubieron ganadores
         const text = `
             SELECT a.id_activity, a.name, a.mode, a.status, a.created_at, a.updated_at, c.id_class, c.description AS lesson, m.id_module, m.name AS module, 
@@ -212,18 +212,47 @@ const getStudentsByActivityID = async (req, res, next) => {
     try {
         const { id_activity } = req.query;
 
+        // Obtiene el 'id_course' a partir del 'id_activity'
         const text = `
-            SELECT u.id_user, u.document, u.name, u.last_name, u.middle_name, au.status 
+            SELECT m.id_course
+            FROM activities AS a
+            INNER JOIN classes AS c
+            ON a.id_class = c.id_class
+            INNER JOIN modules AS m
+            ON c.id_module = m.id_module
+            WHERE a.id_activity = $1`;
+        const values = [id_activity];
+        const { id_course } = (await pool.query(text, values)).rows[0];
+        
+        // Obtiene los estudiantes inscritos al curso
+        const text2 = `
+            SELECT u.id_user, u.name, u.last_name, u.middle_name, u.document, u.username 
+            FROM course_user AS cs 
+            INNER JOIN users AS u 
+            ON cs.id_user = u.id_user 
+            WHERE cs.id_course = $1
+            AND u.active = true`;
+        const values2 = [id_course];
+        const enrolled_students = (await pool.query(text2, values2)).rows;
+
+        // Obtiene los estudiantes ganadores de la actividad
+        const text3 = `
+            SELECT u.id_user, u.name, u.last_name, u.middle_name, u.document, au.status 
             FROM activity_user AS au 
             INNER JOIN users AS u 
             ON au.id_user = u.id_user 
             WHERE id_activity = $1`;
-        const values = [id_activity];
-        const {
-            rows
-        } = await pool.query(text, values);
+        const values3 = [id_activity];
+        const participant_students = (await pool.query(text3, values3)).rows;
+        console.log("participant_students: ", participant_students);
 
-        res.json(rows);
+        enrolled_students.map(student => {
+            student.status = 1;
+            let participant = participant_students.find(participant => participant.id_user == student.id_user);
+            if(participant) student.status = participant.status;
+        });
+
+        res.json(enrolled_students);
     } catch (error) {
         next({
             error

@@ -461,9 +461,7 @@ const updateLessonQuestions = async (req, res, next) => {
         } = req.body;
 
         client.query('BEGIN'); // Inicia la transacción
-
-        // Array para ejecutar consultas en paralelo
-        let promises = [];
+        let promises = []; // Array para ejecutar consultas en paralelo
 
         if (add_questions && add_questions.length > 0) {
             // Inserción del workspace
@@ -724,7 +722,7 @@ const updateLessonQuestion = async (req, res, next) => {
 }
 
 
-function deleteLessonQuestions(array_questions, id_lesson) {
+const deleteLessonQuestions = (array_questions, id_lesson) => {
     const text = `
         DELETE FROM class_question 
         WHERE (id_question, id_class) 
@@ -736,7 +734,7 @@ function deleteLessonQuestions(array_questions, id_lesson) {
     }
 }
 
-function insertLessonQuestions(array_questions, id_lesson) {
+const insertLessonQuestions = (array_questions, id_lesson) => {
     const text = `
         INSERT INTO class_question (id_question, id_class) 
         SELECT * FROM UNNEST ($1::int[], $2::int[])`;
@@ -747,16 +745,16 @@ function insertLessonQuestions(array_questions, id_lesson) {
     }
 }
 
-function formatWorkspaceArray(array_questions, id_lesson) {
-    let values1 = []; //[id_lesson, id_lesson, id_lesson]
-    let values2 = []; //[id_question1, id_question2, id_question3]
+const formatWorkspaceArray = (array_questions, id_lesson) => {
+    let values1 = []; //[id_question1, id_question2, id_question3]
+    let values2 = []; //[id_lesson, id_lesson, id_lesson]
 
     array_questions.map((id_question) => {
         values1.push(id_question);
         values2.push(id_lesson);
     });
 
-    return [values1, values2]
+    return [values1, values2];
 }
 
 

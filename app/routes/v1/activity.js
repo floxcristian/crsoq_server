@@ -8,7 +8,7 @@ const _validate = require('../../middlewares/validation-result');
 
 var api = express.Router();
 
-// Routes and controllers
+// Routes
 api.get('/', activityCtrl.getActivities);
 api.get('/students', activityCtrl.getStudentsByActivityID);
 // api.get('/:userId', colorController.getColorsByUserId);

@@ -2,9 +2,9 @@
 
 // Load modules
 const pool = require('../database');
-var socket = require('../../index');
+const socket = require('../../index');
 
-// Obtiene las matrículas
+// Obtiene las inscripciones de un estudiante
 const getEnrollmentsByUserId = async (req, res, next) => {
 
     try {
@@ -42,7 +42,7 @@ const createEnrollment = async (req, res, next) => {
             id_course
         } = req.body;
 
-        // Query para crear la matrícula
+        // Crea la inscripción de un estudiante en un curso
         const text = `
             INSERT INTO course_user(id_user, id_course) 
             VALUES($1, $2) 
@@ -107,10 +107,10 @@ const updateEnrollment = async (req, res, next) => {
         const { active } = req.body;
 
         const text = `
-        UPDATE course_user 
-        SET active = $1 
-        WHERE id_course = $2 
-        AND id_user = $3`;
+            UPDATE course_user 
+            SET active = $1 
+            WHERE id_course = $2 
+            AND id_user = $3`;
         const values = [active, id_course, id_user];
         await pool.query(text, values);
 
@@ -144,6 +144,7 @@ const updateEnrollment = async (req, res, next) => {
     }
 }
 
+// Obtiene los estudiantes inscritos a un curso
 const getEnrollmentsByCourseId = async (req, res, next) => {
     try {
         const { id_course } = req.params;
@@ -159,11 +160,9 @@ const getEnrollmentsByCourseId = async (req, res, next) => {
             rows
         } = await pool.query(text, values);
 
-        //const res2 = (await pool.query(text2, values2)).rows[0];
-        //console.log(res1)
         res.json({
             items: rows
-        })
+        });
 
     } catch (error) {
         next({
@@ -192,11 +191,12 @@ const deleteEnrollment = async (req, res, next) => {
         await pool.query(text, values);
 
         // Revisar que parámetros necesito realmente
-        const text2 = `SELECT s.id_subject, s.name AS subject
-        FROM courses AS c
-        INNER JOIN subjects AS s
-        ON c.id_subject = s.id_subject
-        WHERE c.id_course = $1`;
+        const text2 = `
+            SELECT s.id_subject, s.name AS subject
+            FROM courses AS c
+            INNER JOIN subjects AS s
+            ON c.id_subject = s.id_subject
+            WHERE c.id_course = $1`;
         const values2 = [id_course];
         const {
             rows

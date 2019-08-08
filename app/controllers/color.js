@@ -3,7 +3,7 @@
 // Load modules
 const pool = require('../database');
 
-// Obtiene los colores
+// Obtiene todos los colores
 const getColors = async (req, res, next) => {
     try {
         const text = `
@@ -143,7 +143,7 @@ const deleteColor = async (req, res, next) => {
 // =====================================================
 // Chequea si el nombre o hexadecimal del COLOR existe
 // =====================================================
-function checkColorExists(name, hexadecimal) {
+const checkColorExists = (name, hexadecimal) => {
     return new Promise(async (resolve, reject) => {
         try {
             const result_search = await Promise.all([

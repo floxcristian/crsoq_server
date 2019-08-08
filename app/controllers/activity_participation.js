@@ -31,7 +31,8 @@ const updateActivityParticipation = async (req, res, next) => {
     }
 }
 
-// 
+// Actualiza un conjunto de participaciones en una actividad
+//> + Pero si no existe no hace nada... (no inserta)
 const updateActivityParticipations = async (req, res, next) => {
     
     try {
@@ -42,10 +43,39 @@ const updateActivityParticipations = async (req, res, next) => {
         // Actualizar múltiples registros pasando un array de objetos: https://stackoverflow.com/questions/37059187/convert-object-array-to-array-compatible-for-nodejs-pg-unnest
 
         // Inserta el 'id_activity' en cada registro del array 'array_participation'
+        /*
+       
+        Actualiza el estado del estudiante
+        const text = `
+            INSERT INTO user_question_class(id_user, id_class, id_question, status) 
+            VALUES($1, $2, $3, 3) 
+            ON CONFLICT ON CONSTRAINT pk_user_question_class DO UPDATE SET status = 3, update_date = DEFAULT`;
+        const values = [id_user, id_class, id_question];
+        await pool.query(text, values);
+        */
         array_participation.map(participation => Object.assign(participation, {
             id_activity
         }));
-        
+
+        // Debiese de tener 2 arrays: los que ganan (insert into) y los que pierden (delete from)
+        let promises;
+
+        if (add_winners && add_winners.length > 0) {
+            const {
+                text,
+                values
+            } = insertLessonQuestions(add_questions, id_lesson);
+            // Agrega la query al array 'promises'
+            promises.push(client.query(text, values));
+        }
+
+        if(delete_winners && delete_winners.length > 0){
+
+        }
+
+        console.log("array_participation: ", array_participation);
+        console.log("id_activity: ", id_activity);
+        //> No se actualiza
         const text = `
             UPDATE activity_user AS au 
             SET status = s.status 
@@ -59,8 +89,17 @@ const updateActivityParticipations = async (req, res, next) => {
             WHERE au.id_activity = s.id_activity 
             AND au.id_user = s.id_user`;
         const values = [JSON.stringify(array_participation)];
+        console.log("values: ", values);
         await pool.query(text, values);
         res.json({});
+
+        const text2 = `
+            SELECT id_user, id_activity, status
+            FROM activity_user AS au
+            WHERE au.id_activity = $1`;
+        const values2 = [id_activity];
+        const { rows } = await pool.query(text2, values2);
+        console.log("update?: ", rows);
 
     } catch (error) {
         next({
@@ -70,8 +109,11 @@ const updateActivityParticipations = async (req, res, next) => {
 
 }
 
-function deleteWinners(array_students, id_activity) {
-    const text = `DELETE FROM class_question WHERE (id_question, id_class) IN (SELECT * FROM UNNEST ($1::int[], $2::int[]))`;
+const deleteWinners = (array_students, id_activity) => {
+    const text = `
+        DELETE FROM activity_user 
+        WHERE (id_user, id_activity) 
+        IN (SELECT * FROM UNNEST ($1::int[], $2::int[]))`;
     const values = formatWorkspaceArray(array_students, id_activity);
     return {
         text,
@@ -79,15 +121,10 @@ function deleteWinners(array_students, id_activity) {
     }
 }
 
-//ARREGLAR THIS
-function insertWinners(array_students, id_activity) {
+
+const insertWinners = (array_students, id_activity) => {
     const text = `
-        UPDATE activity_user 
-        SET status = 2
-        WHERE id_activity = $2 
-        AND id_user = $3`;
-    const text = `
-        INSERT INTO class_question (id_question, id_class) 
+        INSERT INTO activity_user (id_user, id_activity) 
         SELECT * FROM UNNEST ($1::int[], $2::int[])`;
     const values = formatWorkspaceArray(array_students, id_activity);
     return {
@@ -95,6 +132,19 @@ function insertWinners(array_students, id_activity) {
         values
     }
 }
+
+const formatWorkspaceArray = (array_students, id_activity) => {
+    let values1 = []; //[id_user1, id_user2, id_user3]
+    let values2 = []; //[id_activity, id_activity, id_activity]
+
+    array_students.map((id_user) => {
+        values1.push(id_user);
+        values2.push(id_activity);
+    });
+
+    return [values1, values2];
+}
+
 
 module.exports = {
     updateActivityParticipation,
