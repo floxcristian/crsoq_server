@@ -129,7 +129,8 @@ const updateActivity = async (req, res, next) => {
             name,
             mode,
             status,
-            array_participation
+            add_winners, 
+            delete_winners
         } = req.body;
 
         // Verifica si el estado de la actividad cambio
@@ -171,14 +172,30 @@ const updateActivity = async (req, res, next) => {
         }
 
         // Actualiza la participación en la actividad
-        if (array_participation.length > 0) {
+        /*if (array_participation.length > 0) {
             const {
                 text2,
                 values2
             } = updateParticipation(id_activity, array_participation);
             promises.push(client.query(text2, values2)); // Agrega la query al array 'promises'
+        }*/
+
+        if (add_winners && add_winners.length > 0) {
+            const {
+                text,
+                values
+            } = insertWinners(add_winners, id_activity);
+            // Agrega la query al array 'promises'
+            promises.push(client.query(text, values));
         }
 
+        if (delete_winners && delete_winners.length > 0) {
+            const {
+                text,
+                values
+            } = deleteWinners(delete_winners, id_activity);
+            promises.push(client.query(text, values));
+        }
 
         await Promise.all(promises); // Ejecuta consultas en paralelo
         await client.query('COMMIT'); // Finaliza la transacción
@@ -328,6 +345,46 @@ const updateParticipation = async (id_activity, array_participation) => {
         text2,
         values2
     }
+}
+
+
+const deleteWinners = (array_students, id_activity) => {
+    const text = `
+        DELETE FROM activity_user 
+        WHERE (id_user, id_activity) 
+        IN (SELECT * FROM UNNEST ($1::int[], $2::int[]))`;
+    const values = formatWorkspaceArray(array_students, id_activity, 1);
+    return {
+        text,
+        values
+    }
+}
+
+
+const insertWinners = (array_students, id_activity) => {
+    const text = `
+        INSERT INTO activity_user (id_user, id_activity, status) 
+        SELECT * FROM UNNEST ($1::int[], $2::int[], $3::int[])`;
+    const values = formatWorkspaceArray(array_students, id_activity, 2);
+    return {
+        text,
+        values
+    }
+}
+
+const formatWorkspaceArray = (array_students, id_activity, status) => {
+    let values1 = []; //[id_user1, id_user2, id_user3]
+    let values2 = []; //[id_activity, id_activity, id_activity]
+    let values3 = []; //[status, status, status]
+
+    array_students.map((id_user) => {
+        values1.push(id_user);
+        values2.push(id_activity);
+        if(status == 2) values3.push(status);
+    });
+
+    if(status == 2) return [values1, values2, values3];
+    else return [values1, values2];
 }
 
 module.exports = {

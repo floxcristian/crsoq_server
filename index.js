@@ -665,6 +665,7 @@ function initWebServer() {
                             // Actualiza el estado de los estudiantes en clase 'students_in_classrooms' a 'en espera' (status 1) 
                             resetStudentsInClassroomStatus(id_class);
 
+                            console.log("go ctmsa");
                             // Emite la pregunta a los estudiantes que esten en la sección de juego de la clase
                             socket.in(id_class + 'play-question-section').emit('studentHasEnteredToTheClassroom', {
                                 type: 3,

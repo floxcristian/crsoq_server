@@ -43,17 +43,16 @@ async function getModuleOptions(req, res, next) {
         const values = [id_course];
         const { rows } = await pool.query(text, values);
 
-        // Envía la Respuesta
+        
         res.json(rows);
     } catch (error) {
         next({ error });
     }
 }
 
-// ----------------------------------------
-// Create Module
-// ----------------------------------------
-async function createModule(req, res) {
+
+// Crea un módulo
+const createModule = async (req, res, next) => {
 
     try {
         const {

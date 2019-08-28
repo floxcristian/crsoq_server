@@ -22,8 +22,6 @@ const getLessonQuestions = async (req, res, next) => {
         // Calcula el from a partir de los params 'page' y 'page_size'
         const from = (page - 1) * page_size;
 
-        console.log(`id_lesson: ${id_lesson}, id_category: ${id_category}, id_subcategory: ${id_subcategory}, difficulty: ${difficulty}, page_size: ${page_size}, page: ${page}`);
-
         /*
          CASE WHEN EXISTS (
             SELECT id_user 
@@ -674,6 +672,7 @@ const updateLessonQuestion = async (req, res, next) => {
         let io = socket.getSocket(); // Obtiene el socket
 
         if (status != 1) {
+            console.log("go ctma");
             // Emite la pregunta a los estudiantes que esten en la sección de juego de la clase
             io.in(id_class + 'play-question-section').emit('studentHasEnteredToTheClassroom', {
                 type: 3,
