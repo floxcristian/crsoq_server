@@ -3,11 +3,64 @@
 // Load modules
 const pool = require('../database');
 
+// Obtiene los últimos cursos actualizados
+const getLatestUpdatedCourses = async (req, res, next) => {
+    try {
+        const { id_user } = req.query;
+        const page_size = req.query.page_size || 20;
+        const page = req.query.page || 1;
+
+        // Calcula el from a partir de los params 'page' y 'page_size'
+        const from = (page - 1) * page_size;
+
+
+        const query = `
+            SELECT s.id_subject, s.name AS subject, c.id_course, c.name, c.code, c.course_goal, ca.id_calendar, ca.year, ca.semester, c.created_at, c.updated_at
+            FROM courses AS c 
+            INNER JOIN subjects AS s 
+            ON s.id_subject = c.id_subject 
+            INNER JOIN calendars as ca 
+            ON ca.id_calendar = c.id_calendar 
+            WHERE c.id_user = $1
+            AND c.active = TRUE
+            ORDER BY c.updated_at DESC 
+            LIMIT $2 
+            OFFSET $3`;
+        const values = [id_user, page_size, from];
+        const {
+            rows
+        } = await pool.query(query, values);
+
+        //> Obtener la cantidad de preguntas realizadas en el curso
+        const id_courses = rows.map(course => course.id_course);
+        //> SELECT con múltiples valores
+        const query2 = `
+            SELECT 
+            FROM 
+        `;
+        //>
+        const values2 = [];
+
+        res.send({
+            info: {
+                //total_pages: Math.ceil(total_items / page_size),
+                page: page,
+                page_size: page_size,
+                //total_items: parseInt(total_items),
+            },
+            items: rows
+        });
+    }
+    catch (error) {
+        next({ error });
+    }
+}
+
 // Obtiene los cursos
 const getCourses = async (req, res, next) => {
 
     try {
-      
+
         const id_user = req.query.id_user || null;
         const id_subject = req.query.id_subject || null;
         const page_size = req.query.page_size || 20;
@@ -35,7 +88,7 @@ const getCourses = async (req, res, next) => {
         const {
             rows
         } = await pool.query(query, values);
-        return res.send({
+        res.send({
             info: {
                 //total_pages: Math.ceil(total_items / page_size),
                 page: page,
@@ -43,8 +96,7 @@ const getCourses = async (req, res, next) => {
                 //total_items: parseInt(total_items),
             },
             items: rows
-        })
-
+        });
     } catch (error) {
         next({
             error
@@ -97,7 +149,7 @@ async function getCourseOptions(req, res, next) {
 // Obtiene el detalle de un curso
 const getCourseDetail = async (req, res, next) => {
     try {
-        
+
         const { id_course } = req.params;
 
         const text = `
@@ -126,7 +178,6 @@ const getCourseDetail = async (req, res, next) => {
         });
     }
 }
-
 
 // Crea un curso
 const createCourse = async (req, res, next) => {
@@ -220,6 +271,7 @@ module.exports = {
     getCoursesBy,
     getCourseDetail,
     getCourseOptions,
+    getLatestUpdatedCourses,
     createCourse,
     updateCourse,
     deleteCourse

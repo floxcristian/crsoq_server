@@ -9,7 +9,7 @@ const validate = require('../../middlewares/validation-result');
 
 var api = express.Router();
 
-// Routes and controllers
+// Routes
 //api.post('/login', validation.login, validate.checkResult, authController.login);
 api.post('/login', validation.login, authCtrl.login);
 api.post('/update_session', checkToken, authCtrl.updateSession);
