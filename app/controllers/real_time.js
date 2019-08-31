@@ -5,8 +5,7 @@
 const startedQuestionInClass = async (req, res, next) => {
 
     try {
-
-        const id_class = req.body.id_class;
+        const { id_class } = req.body;
 
         // Obtiene el 'id_course' a partir del 'id_class'
         const text = `

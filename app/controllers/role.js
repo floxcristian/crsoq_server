@@ -18,9 +18,6 @@ async function getRoles(req, res) {
     }
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     getRoles
 }

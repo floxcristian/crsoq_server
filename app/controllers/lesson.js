@@ -287,7 +287,6 @@ const updateLesson = async (req, res, next) => {
 const deleteLesson = async (req, res, next) => {
 
     try {
-
         const { id_class } = req.params;
 
         // Elimina la clase en base al 'id_class'
@@ -298,7 +297,6 @@ const deleteLesson = async (req, res, next) => {
         const values = [id_class];
         const { id_module } = (await pool.query(text, values)).rows[0];
 
-        console.log("ID MODULE (ALIMINAR): ", id_module);
         // Obtiene el id_class para emitir evento socket
         const text2 = `
             SELECT id_course 

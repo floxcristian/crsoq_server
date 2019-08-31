@@ -8,11 +8,9 @@ const SUBJECTS = `SELECT id_subject, name, created_at, updated_at FROM subjects`
 const SUBJECTS_OPTIONS = `SELECT id_subject, name FROM subjects`
 const PAGINATION = ` ORDER BY id_subject LIMIT $1 OFFSET $2`;
 
-async function getSubjects2(req, res) {
+async function getSubjects2(req, res, next) {
     try {
-
-        //PARÁMETROS DE FILTRO OPCIONAL:
-        const search = req.query.search;
+        const { search }= req.query;
         const from = Number(req.query.from);
         const limit = Number(req.query.limit);
         const teacher_options = req.query.teacher_options;

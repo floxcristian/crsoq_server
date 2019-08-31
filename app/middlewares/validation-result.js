@@ -1,14 +1,10 @@
 'use strict'
 
-// ----------------------------------------
 // Load modules
-// ----------------------------------------
-const validationResult = require('express-validator/check').validationResult;
+const { validationResult } = require('express-validator/check');
 
-// ----------------------------------------
-// Check Result Validation
-// ----------------------------------------
-function checkResult(req, res, next) {
+// Check result validation
+const checkResult = (req, res, next) => {
 
     const errors = validationResult(req).formatWith(errorFormatter);
     if (!errors.isEmpty()) {
@@ -24,7 +20,7 @@ function checkResult(req, res, next) {
 
         // next({status: 400, error: error , message: ''})
 
-        return res.status(400).json({
+        res.status(400).json({
             name: 'VALIDATION ERROR',
             details: errors.array({
                 onlyFirstError: true
@@ -55,9 +51,6 @@ const errorFormatter = ({
     }
 }
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     checkResult
 };

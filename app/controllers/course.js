@@ -34,13 +34,17 @@ const getLatestUpdatedCourses = async (req, res, next) => {
         //> Obtener la cantidad de preguntas realizadas en el curso
         const id_courses = rows.map(course => course.id_course);
         //> SELECT con múltiples valores
+        // https://stackoverflow.com/questions/10720420/node-postgres-how-to-execute-where-col-in-dynamic-value-list-query
         const query2 = `
             SELECT 
-            FROM 
-        `;
+            FROM module AS m
+            INNER JOIN classes AS c
+            ON m.id_module = c.module
+            WHERE m.id_course = ANY($1::int[])`;
         //>
-        const values2 = [];
-
+        const values2 = [id_courses];
+        const asked_questions = (await pool.query(query2, values2)).rows;
+        console.log("asked_questions: ", asked_questions);
         res.send({
             info: {
                 //total_pages: Math.ceil(total_items / page_size),
@@ -60,7 +64,6 @@ const getLatestUpdatedCourses = async (req, res, next) => {
 const getCourses = async (req, res, next) => {
 
     try {
-
         const id_user = req.query.id_user || null;
         const id_subject = req.query.id_subject || null;
         const page_size = req.query.page_size || 20;
@@ -70,7 +73,6 @@ const getCourses = async (req, res, next) => {
         // Calcula el from a partir de los params 'page' y 'page_size'
         const from = (page - 1) * page_size;
 
-        console.log(`id_user: ${id_user}, id_subject: ${id_subject}`);
         const query = `
             SELECT s.id_subject, s.name AS subject, c.id_course, c.name, c.code, c.course_goal, c.student_goal, c.active, ca.id_calendar, ca.year, ca.semester, c.created_at, c.updated_at 
             FROM courses AS c 
