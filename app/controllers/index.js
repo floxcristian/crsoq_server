@@ -19,6 +19,7 @@ const activityCtrl = require('./activity');
 const activityParticipationCtrl = require('./activity_participation');
 const imageCtrl = require('./image');
 const workspaceCtrl = require('./workspace');
+const statisticsCtrl = require('./statistics');
 
 module.exports = {
     activityCtrl,
@@ -32,6 +33,7 @@ module.exports = {
     authCtrl,
     subjectCtrl,
     questionCtrl,
+    statisticsCtrl,
     moduleCtrl,
     classCtrl,
     classQuestionCtrl,

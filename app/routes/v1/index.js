@@ -20,6 +20,7 @@ const express = require('express'),
     activityParticipation = require('./activity_participation'),
     images = require('./image'),
     user_question_class = require('./user_question_class');
+    statistics = require('./statistics');
 
 // Define la app express+
 const app = express();
@@ -43,6 +44,7 @@ app
     .use('/lesson_questions', lessonQuestions)
     .use('/activities', activities)
     .use('/activity_participation', activityParticipation)
+    .use('/statistics', statistics)
     .use('/uploads', images);
 
 // Server Status

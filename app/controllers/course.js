@@ -14,8 +14,8 @@ const getLatestUpdatedCourses = async (req, res, next) => {
         const from = (page - 1) * page_size;
 
 
-        const query = `
-            SELECT s.id_subject, s.name AS subject, c.id_course, c.name, c.code, c.course_goal, ca.id_calendar, ca.year, ca.semester, c.created_at, c.updated_at
+        /*const query = `
+            SELECT s.id_subject, s.name AS subject, c.id_course, c.name, c.course_goal, ca.year, ca.semester, c.created_at, c.updated_at
             FROM courses AS c 
             INNER JOIN subjects AS s 
             ON s.id_subject = c.id_subject 
@@ -30,21 +30,62 @@ const getLatestUpdatedCourses = async (req, res, next) => {
         const {
             rows
         } = await pool.query(query, values);
-
+*/
         //> Obtener la cantidad de preguntas realizadas en el curso
-        const id_courses = rows.map(course => course.id_course);
+        //const id_courses = rows.map(course => course.id_course);
+        //console.log("id_courses: ", id_courses);
         //> SELECT con múltiples valores
         // https://stackoverflow.com/questions/10720420/node-postgres-how-to-execute-where-col-in-dynamic-value-list-query
-        const query2 = `
-            SELECT 
-            FROM module AS m
-            INNER JOIN classes AS c
-            ON m.id_module = c.module
-            WHERE m.id_course = ANY($1::int[])`;
+        //> cantidad de preguntas hechas por cada curso
+        //> ultima actualización en question_class
+        const query = `
+            SELECT s.name AS subject, c.id_course, ca.year, ca.semester, c.name, c.course_goal, MAX(cq.updated_at) AS last_updated_question, count(*) AS total_asked_questions
+            FROM courses AS c
+            INNER JOIN subjects AS s 
+            ON s.id_subject = c.id_subject
+            INNER JOIN calendars AS ca
+            ON c.id_calendar = ca.id_calendar
+            INNER JOIN modules AS m
+            ON c.id_course = m.id_course
+            INNER JOIN classes AS cl
+            ON m.id_module = cl.id_module
+            INNER JOIN class_question AS cq
+            ON cl.id_class = cq.id_class
+            WHERE c.id_user = $1
+            AND c.active = TRUE
+            AND cq.status= 5
+            GROUP BY c.id_course, s.id_subject, ca.id_calendar 
+            ORDER BY last_updated_question DESC
+            LIMIT $2
+            OFFSET $3`;
+
         //>
-        const values2 = [id_courses];
-        const asked_questions = (await pool.query(query2, values2)).rows;
-        console.log("asked_questions: ", asked_questions);
+        /*const query2 = `
+            SELECT m.id_course, count(*) AS asked_questions
+            FROM modules AS m
+            INNER JOIN classes AS c
+            ON m.id_module = c.id_module
+            INNER JOIN class_question AS cq
+            ON c.id_class = cq.id_class
+            WHERE m.id_course = ANY($1::int[])
+            GROUP BY m.id_course`;
+            //AND cq.status = 5
+        //>*/
+        const values = [id_user, page_size, from];
+        const { rows } = (await pool.query(query, values));
+
+
+        // Calcular porcentaje
+        if (rows.length > 0) {
+            rows.forEach(item => {
+                item.total_asked_questions = parseInt(item.total_asked_questions);
+                if (item.total_asked_questions > item.course_goal) item.percentage = 100
+                else item.percentage = parseFloat(((item.total_asked_questions * 100) / item.course_goal).toFixed(2));
+            });
+        }
+        console.log("asked_questions: ", rows);
+
+
         res.send({
             info: {
                 //total_pages: Math.ceil(total_items / page_size),
