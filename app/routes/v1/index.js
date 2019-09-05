@@ -19,7 +19,7 @@ const express = require('express'),
     activities = require('./activity'),
     activityParticipation = require('./activity_participation'),
     images = require('./image'),
-    user_question_class = require('./user_question_class');
+    user_question_class = require('./user_question_class'),
     statistics = require('./statistics');
 
 // Define la app express+
