@@ -90,19 +90,19 @@ const getUsersStudents = async (req, res, next) => {
 
     //const text = 'SELECT u.id_user, u.name, u.last_name, u.middle_name, u.document FROM roles AS r INNER JOIN users AS u ON r.id_user = u.id_user WHERE role = 3 AND document = $1';
     const text = `
-            SELECT r.id_user, u.name, u.last_name, u.middle_name, u.document, u.username, u.email, 
-            CASE WHEN EXISTS (
-                SELECT cu.id_user 
-                FROM course_user AS cu 
-                WHERE cu.id_user = u.id_user 
-                AND id_course = $1) 
-                THEN TRUE 
-                ELSE FALSE END AS enrolled 
-            FROM roles AS r 
-            INNER JOIN users AS u 
-            ON r.id_user = u.id_user 
-            WHERE role = 3 
-            AND document = $2`;
+      SELECT r.id_user, u.name, u.last_name, u.middle_name, u.document, u.username, u.email, 
+      CASE WHEN EXISTS (
+          SELECT cu.id_user 
+          FROM course_user AS cu 
+          WHERE cu.id_user = u.id_user 
+          AND id_course = $1) 
+          THEN TRUE 
+          ELSE FALSE END AS enrolled 
+      FROM roles AS r 
+      INNER JOIN users AS u 
+      ON r.id_user = u.id_user 
+      WHERE role = 3 
+      AND document = $2`;
     const values = [id_course, document];
     const { rows } = await pool.query(text, values);
     res.json({
@@ -206,9 +206,9 @@ const createUser = async (req, res, next) => {
 
           // Inserta al usuario
           const text1 = `
-                        INSERT INTO users(name, last_name, middle_name, document, email, phone, username, password) 
-                        VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
-                        RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
+            INSERT INTO users(name, last_name, middle_name, document, email, phone, username, password) 
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
+            RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
           const values1 = [
             name,
             last_name,
@@ -278,7 +278,10 @@ const updateUser = async (req, res, next) => {
 
       // Consulta para actualizar el usuario
       const q_update_us =
-        "UPDATE users SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7, active = $8 WHERE id_user = $9 RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at";
+        `UPDATE users 
+        SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7, active = $8 
+        WHERE id_user = $9 
+        RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
       const v_update_us = [
         name,
         last_name,
@@ -327,10 +330,10 @@ const updateUser = async (req, res, next) => {
     } else if (id_user != req.user_payload.id_user) {
       //SI SOY DUEÑO DEL ID
       let text = `
-                UPDATE users 
-                SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7 
-                WHERE id_user = $8 
-                RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
+        UPDATE users 
+        SET name = $1, last_name = $2, middle_name = $3, document = $4, email = $5, phone = $6, username = $7 
+        WHERE id_user = $8 
+        RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
       let values = [
         name,
         last_name,
@@ -378,8 +381,8 @@ const deleteUser = async (req, res, next) => {
   try {
     const { id_user } = req.params;
     const text = `
-            DELETE FROM users 
-            WHERE id_user = $1`;
+    DELETE FROM users 
+    WHERE id_user = $1`;
     const values = [id_user];
     await pool.query(text, values);
     res.json({
@@ -396,9 +399,9 @@ const disableUser = async (req, res, next) => {
   try {
     const { id_user } = req.params;
     const text = `
-            UPDATE users 
-            SET active = false 
-            WHERE id_user = $1`;
+      UPDATE users 
+      SET active = false 
+      WHERE id_user = $1`;
     const values = [id_user];
     await pool.query(text, values);
     res.json({
@@ -497,8 +500,8 @@ function searchAnything(search_value, index) {
 const countUser = async (req, res, next) => {
   try {
     const text = `
-            SELECT count(*) AS count 
-            FROM users`;
+      SELECT count(*) AS count 
+      FROM users`;
     const { count } = (await pool.query(text)).rows[0];
     res.json({
       result: count

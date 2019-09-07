@@ -50,7 +50,7 @@ const createModule = async (req, res, next) => {
 
     if ((id_course, name)) {
       const { rows } = await pool.query(
-        "INSERT INTO modules(id_course, name) VALUES($1, $2)",
+        `INSERT INTO modules(id_course, name) VALUES($1, $2)`,
         [id_course, name]
       );
       res.json({
@@ -89,10 +89,10 @@ const updateModule = async (req, res, next) => {
     const { name } = req.body;
 
     const text = `
-            UPDATE modules 
-            SET name = $1 
-            WHERE id_module = $2 
-            RETURNING id_module, id_course, name, position, created_at, updated_at`;
+      UPDATE modules 
+      SET name = $1 
+      WHERE id_module = $2 
+      RETURNING id_module, id_course, name, position, created_at, updated_at`;
     const values = [name, id_module];
     const { rows } = await pool.query(text, values);
     res.json(rows[0]);

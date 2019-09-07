@@ -61,7 +61,10 @@ const createColor = async (req, res, next) => {
                 return res.status(500).json(color_exist)
             }
 
-            const text = 'INSERT INTO colors(name, hexadecimal) VALUES(lower($1), upper($2)) RETURNING id_color, name, hexadecimal';
+            const text = `
+                INSERT INTO colors(name, hexadecimal) 
+                VALUES(lower($1), upper($2)) 
+                RETURNING id_color, name, hexadecimal`;
             const values = [name, hexadecimal];
             const {
                 rows
@@ -97,7 +100,10 @@ const updateColor = async (req, res, next) => {
                 return res.status(500).json(color_exist)
             }
 
-            const text = 'UPDATE colors SET name = lower($1), hexadecimal = upper($2) WHERE id_color = $3 RETURNING id_color, name, hexadecimal';
+            const text = `
+                UPDATE colors SET name = lower($1), hexadecimal = upper($2) 
+                WHERE id_color = $3 
+                RETURNING id_color, name, hexadecimal`;
             const values = [name, hexadecimal, id_color];
             const {
                 rows
@@ -146,9 +152,21 @@ const deleteColor = async (req, res, next) => {
 const checkColorExists = (name, hexadecimal) => {
     return new Promise(async (resolve, reject) => {
         try {
+            const text1 = `
+                SELECT id_color 
+                FROM colors 
+                WHERE name = lower($1)`;
+            const values1 = [name];
+
+            const text2 = `
+                SELECT id_color 
+                FROM colors 
+                WHERE hexadecimal = upper($1)`;
+            const values2 = [hexadecimal];
+            
             const result_search = await Promise.all([
-                pool.query('SELECT id_color FROM colors WHERE name = lower($1)', [name]),
-                pool.query('SELECT id_color FROM colors WHERE hexadecimal = upper($1)', [hexadecimal])
+                pool.query(text1, values1),
+                pool.query(text2, values2)
             ]);
             const rows_name = result_search[0].rows;
             const rows_hexadecimal = result_search[1].rows;

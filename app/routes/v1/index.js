@@ -22,10 +22,10 @@ const express = require('express'),
     user_question_class = require('./user_question_class'),
     statistics = require('./statistics');
 
-// Define la app express+
+// Define la app express
 const app = express();
 
-// Definimos los middlewares de las rutas
+// Define middlewares de las rutas
 app
     .use(auth)
     .use('/colors', colors)

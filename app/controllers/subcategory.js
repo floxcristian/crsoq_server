@@ -18,7 +18,8 @@ const getSubcategories = async (req, res, next) => {
         const from = (page - 1) * page_size;
 
         // Obtiene las subcategorias
-        const text = `SELECT su.id_subject, su.name AS subject, c.id_category, c.name AS category, s.id_subcategory, s.name, s.created_at, s.updated_at 
+        const text = `
+        SELECT su.id_subject, su.name AS subject, c.id_category, c.name AS category, s.id_subcategory, s.name, s.created_at, s.updated_at 
         FROM subcategories AS s 
         INNER JOIN categories AS c 
         ON s.id_category = c.id_category 
@@ -61,9 +62,7 @@ const getSubcategories = async (req, res, next) => {
     }
 }
 
-// ----------------------------------------
 // Get Categories as Select Options
-// ----------------------------------------
 const getSubcategoryOptions = async (req, res, next) => {
     try {
         const {
@@ -166,16 +165,17 @@ async function getLastSubcategories(req, res, next) {
         const { id_user } = req.query;
         const page_size = req.query.page_size || null;
 
-        const text = `SELECT su.id_subject, su.name AS subject, c.id_category, c.name AS category, s.id_subcategory, s.name, s.created_at, s.updated_at 
-        FROM subcategories AS s 
-        INNER JOIN categories AS c 
-        ON s.id_category = c.id_category 
-        INNER JOIN subjects AS su 
-        ON su.id_subject = c.id_subject 
-        WHERE c.id_user = $1 
-        AND s.name != 'DEFAULT'
-        ORDER BY s.updated_at DESC 
-        LIMIT $2`;
+        const text = `
+            SELECT su.id_subject, su.name AS subject, c.id_category, c.name AS category, s.id_subcategory, s.name, s.created_at, s.updated_at 
+            FROM subcategories AS s 
+            INNER JOIN categories AS c 
+            ON s.id_category = c.id_category 
+            INNER JOIN subjects AS su 
+            ON su.id_subject = c.id_subject 
+            WHERE c.id_user = $1 
+            AND s.name != 'DEFAULT'
+            ORDER BY s.updated_at DESC 
+            LIMIT $2`;
         const values = [id_user, page_size];
         const {
             rows

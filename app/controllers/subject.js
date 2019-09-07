@@ -18,7 +18,13 @@ async function getSubjects2(req, res, next) {
 
         //OBTIENE LOS NOMBRES DE LAS ASIGNATURAS EN DONDE EL PROFESOR HA CREADO CURSOS (PARA EL SELECTOR)
         if (teacher_options) {
-            const text = `SELECT s.id_subject, s.name FROM subjects AS s INNER JOIN user_subject AS us ON s.id_subject=us.id_subject WHERE us.id_user = $1 ORDER BY name`;
+            const text = `
+                SELECT s.id_subject, s.name 
+                FROM subjects AS s 
+                INNER JOIN user_subject AS us 
+                ON s.id_subject=us.id_subject 
+                WHERE us.id_user = $1 
+                ORDER BY name`;
             const values = [teacher_options]
             const { rows } = await pool.query(text, values);
             return res.send(rows)

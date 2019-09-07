@@ -1,16 +1,14 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const pool = require('../database');
 
-// ----------------------------------------
-// Get Roles
-// ----------------------------------------
-async function getRoles(req, res) {
+// Get roles
+const getRoles = async (req, res, next) => {
     try {
-        const text = 'SELECT * FROM role';
+        const text = `
+            SELECT * 
+            FROM roles`;
         const { rows } = await pool.query(text);
         res.json(rows)
     } catch (error) {

@@ -795,6 +795,7 @@ const getCourseQuestions = async (req, res, next) => {
         // Calcula el from a partir de los params 'page' y 'page_size'
         const from = (page - 1) * page_size;
 
+        //>
         const text = `
         SELECT t1.subject, t1.id_category, t1.category, t1.id_subcategory, t1.subcategory, t1.id_question, t1.question, t1.difficulty, t1.image, t1.updated_at, t2.id_class, t2.class, t2.module, t2.course
         FROM (   
@@ -898,14 +899,3 @@ module.exports = {
     deleteClassQuestion,
     getSummaryStudentParticipation
 }
-
-/*
-participants: [
-    {
-        status: 3
-    },
-    {
-        status: 2
-    }
- ]
- */

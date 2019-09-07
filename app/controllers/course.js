@@ -238,8 +238,10 @@ const createCourse = async (req, res, next) => {
         if (id_calendar && id_user && id_subject && name && course_goal && student_goal) {
 
             // Inserta un workspace (si ya existe no hace nada)
-            const text = `WITH user_subject AS (
-                INSERT INTO user_subject(id_user,id_subject) VALUES($1,$2) ON CONFLICT ON CONSTRAINT pk_user_subject DO NOTHING
+            //> Para que es with??
+            const text = `
+                WITH user_subject AS (
+                    INSERT INTO user_subject(id_user,id_subject) VALUES($1,$2) ON CONFLICT ON CONSTRAINT pk_user_subject DO NOTHING
                 ) 
                 INSERT INTO courses(id_calendar, id_user, id_subject, name, course_goal, student_goal, code) 
                 VALUES($3, $4, $5, $6, $7, $8, LEFT(uuid_generate_v4()::text, 8))`

@@ -142,9 +142,7 @@ const insertWorkspaces = (array_workspaces, id_user) => {
 }
 
 
-// ----------------------------------------
 // Get Categories as Select Options
-// ----------------------------------------
 async function getCategoryOptions(req, res, next) {
     try {
         // Query Params
@@ -152,7 +150,12 @@ async function getCategoryOptions(req, res, next) {
         const id_subject = req.query.id_subject; // Obligatorio por ahora  
 
         // Obtiene las categorías
-        const text = 'SELECT id_category, name FROM categories WHERE id_user = $1 AND id_subject = $2 ORDER BY name';
+        const text = `
+            SELECT id_category, name 
+            FROM categories 
+            WHERE id_user = $1 
+            AND id_subject = $2 
+            ORDER BY name`;
         const values = [id_user, id_subject];
         const {
             rows
@@ -167,10 +170,7 @@ async function getCategoryOptions(req, res, next) {
     }
 }
 
-
-// ----------------------------------------
 // Create Category
-// ----------------------------------------
 async function createCategory(req, res, next) {
 
     try {
@@ -263,8 +263,4 @@ const formatWorkspaceArray = (array_workspaces, id_user) => {
 module.exports = {
     getWorkspaces,
     updateWorkspaces
-    // getCategoryOptions,
-    //createCategory,
-    //updateCategory,
-    //deleteCategory
 }
