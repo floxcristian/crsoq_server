@@ -11,35 +11,35 @@ const courseStudentPoints = async (req, res, next) => {
     // Puntos de Preguntas y de Actividades
 
     const text = `
-            SELECT uqc.id_user, count(*) AS question_points
-            FROM modules AS m
-            INNER JOIN classes AS c
-            ON m.id_module = c.id_module
-            INNER JOIN activities AS a
-            ON c.id_class = a.id_class
-            INNER JOIN activity_user AS au
-            ON a.id_activity = au.id_activity
-            INNER JOIN class_question AS cq
-            ON c.id_class = cq.id_class
-            INNER JOIN user_question_class AS uqc
-            ON (cq.id_class = uqc.id_class AND cq.id_question = uqc.id_question)
-            WHERE m.id_course = $1
-            AND cq.status = 5
-            AND uqc.status = 5
-            GROUP BY uqc.id_user`;
+      SELECT uqc.id_user, count(*) AS question_points
+      FROM modules AS m
+      INNER JOIN classes AS c
+      ON m.id_module = c.id_module
+      INNER JOIN activities AS a
+      ON c.id_class = a.id_class
+      INNER JOIN activity_user AS au
+      ON a.id_activity = au.id_activity
+      INNER JOIN class_question AS cq
+      ON c.id_class = cq.id_class
+      INNER JOIN user_question_class AS uqc
+      ON (cq.id_class = uqc.id_class AND cq.id_question = uqc.id_question)
+      WHERE m.id_course = $1
+      AND cq.status = 5
+      AND uqc.status = 5
+      GROUP BY uqc.id_user`;
     const values = [id_course];
     const { rows } = await pool.query(text, values);
-
 
     console.log("statistics: ", rows);
     // Obtiene array de clases
     const text1 = `
-      SELECT 
-      FROM (
-        SELECT id_class
+      SELECT t1.id_user, t1.question_points, t2.activity_points
+      FROM ( 
+        SELECT uqc.id_user, count(*) AS question_points
         FROM modules AS m
         INNER JOIN classes AS c
         ON m.id_module = c.id_module
+        
         INNER JOIN class_question AS cq
         ON c.id_class = cq.id_class
         INNER JOIN user_question_class AS uqc
@@ -47,14 +47,27 @@ const courseStudentPoints = async (req, res, next) => {
         WHERE m.id_course = $1
         AND cq.status = 5
         AND uqc.status = 5
-        GROUP BY uqc.i_user
+        GROUP BY uqc.id_user
       ) AS t1
-      `;
+      INNER JOIN (
+        SELECT uqc.id_user, count(*) AS activity_points
+        FROM modules AS m
+        INNER JOIN classes AS c
+        ON m.id_module = c.id_module
+        
+        INNER JOIN activities AS a
+        ON c.id_class = a.id_class
+        INNER JOIN activity_user AS au
+        ON a.id_activity = au.id_activity
+        WHERE m.id_course = $1
+        AND a.status = 5
+        AND au.status = 5
+        GROUP BY au.id_user
+      ) AS t2
+      ON t1.id_user = t2.id_user`;
     const values1 = [id_course];
 
-
-
-    res.json('hi');
+    res.json("hi");
   } catch (error) {
     next({ error });
   }
