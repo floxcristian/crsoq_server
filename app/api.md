@@ -138,6 +138,7 @@ AND ($2::int IS NULL OR mode = $2)
 AND ($3::bool IS NULL OR status = $3)
 LIMIT $4 OFFSET $5;
 ```
+
 Referencia parámetro opcional:
 https://stackoverflow.com/questions/21062148/how-to-query-postgres-on-optional-params
 Uso del case:
