@@ -32,7 +32,7 @@ const courseStudentPoints = async (req, res, next) => {
     // Obtiene array de clases
 
   const text = `
-    SELECT u.id_user, u.name, u.last_name, u.middle_name, t3.question_points, t3.activity_points
+    SELECT u.id_user, u.document, u.name, u.last_name, u.middle_name, t3.question_points, t3.activity_points
     FROM course_user AS cu
     INNER JOIN users AS u
     ON cu.id_user = u.id_user
