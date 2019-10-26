@@ -20,7 +20,9 @@ const express = require('express'),
     activityParticipation = require('./activity_participation'),
     images = require('./image'),
     user_question_class = require('./user_question_class'),
-    statistics = require('./statistics');
+    statistics = require('./statistics'),
+    files = require('./files');
+
 
 // Define la app express
 const app = express();
@@ -45,7 +47,8 @@ app
     .use('/activities', activities)
     .use('/activity_participation', activityParticipation)
     .use('/statistics', statistics)
-    .use('/uploads', images);
+    .use('/uploads', images)
+    .use('/files', files);
 
 // Server Status
 app.get('/status', (req, res) => res.send('OK'));
