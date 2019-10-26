@@ -4,6 +4,11 @@
 const pool = require('../database');
 const Excel = require('exceljs');
 
+// exceljs resources
+// + https://repl.it/@vishwasc/ExcelJs-Example
+// + https://codeday.me/es/qa/20190606/814569.html
+// + http://mundrisoft.com/tech-bytes/protractor-add-data-in-excel-sheet-using-exceljs-in-node/
+
 // Obtiene todos los colores
 const genWorkbook = async (req, res, next) => {
     try {
@@ -39,7 +44,7 @@ const createExcelFile = async (file_path, response) => {
         const workbook = new Excel.Workbook();
         // Set workbook properties
         //<
-        workbook.creator = 'CRSOQ v1';
+        workbook.creator = 'RuviClass';
         workbook.created = new Date();
         //>
 
@@ -64,7 +69,8 @@ const createExcelFile = async (file_path, response) => {
         // Add title row
         let titleRow = worksheet.addRow(["title"]);
         
-        titleRow.font = { name: 'Comic Sans MS', family: 4, size: 16, underline: 'double', bold: true };
+        // Fix: Put 'background color' and 'border color' on 'title'
+        titleRow.font = { name: 'Arial', family: 4, size: 16, bold: true };
         worksheet.mergeCells('A1:F1');
         worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -73,6 +79,7 @@ const createExcelFile = async (file_path, response) => {
         worksheet.addRow([]);
 
         //Add row with current date
+        // Fix: put 'bold: true' on 'Asignatura', 'Curso' and 'Código Curso'.
         let subTitleRow = worksheet.addRow(['Asignatura: ', 'xxx', 'Curso: ', 'xxx', 'Código Curso:', 'xxx']);
         /*
         // Add column headers
