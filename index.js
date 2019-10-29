@@ -747,7 +747,7 @@ function initWebServer() {
             })
         } catch (error) {
             console.log(error);
-            process.exit(0); // Mata el proceso
+            //process.exit(0); // Mata el proceso
         }
 
     })();
