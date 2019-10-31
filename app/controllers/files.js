@@ -4,10 +4,13 @@
 const pool = require('../database');
 const Excel = require('exceljs');
 
+const EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+const EXCEL_EXTENSION = '.xlsx';
 // exceljs resources
 // + https://repl.it/@vishwasc/ExcelJs-Example
 // + https://codeday.me/es/qa/20190606/814569.html
 // + http://mundrisoft.com/tech-bytes/protractor-add-data-in-excel-sheet-using-exceljs-in-node/
+// + https://js.devexpress.com/Demos/WidgetsGallery/Demo/DataGrid/ExcelJS/Angular/Light/
 
 // Obtiene todos los colores
 const genWorkbook = async (req, res, next) => {
@@ -16,7 +19,7 @@ const genWorkbook = async (req, res, next) => {
         const { id_course } = req.params;
         console.log("[genWorkbook] id_course: ", id_course);
 
-        res = await createExcelFile("sample.xlsx", res);
+        res = await createExcelFile(`sample.${EXCEL_EXTENSION}`, res);
 
         setTimeout(() => {
             console.log("res: ", res);
@@ -68,8 +71,8 @@ const createExcelFile = async (file_path, response) => {
         // Add row using key mapping to columns
         // Add title row
         let titleRow = worksheet.addRow(["title"]);
-        
-        // Fix: Put 'background color' and 'border color' on 'title'
+
+        // > Fix: Put 'background color' and 'border color' on 'title'
         titleRow.font = { name: 'Arial', family: 4, size: 16, bold: true };
         worksheet.mergeCells('A1:F1');
         worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
@@ -78,8 +81,8 @@ const createExcelFile = async (file_path, response) => {
         worksheet.addRow([], []);
         worksheet.addRow([]);
 
-        //Add row with current date
-        // Fix: put 'bold: true' on 'Asignatura', 'Curso' and 'Código Curso'.
+        // Add row with current date
+        // > Fix: put 'bold: true' on 'Asignatura', 'Curso' and 'Código Curso'.
         let subTitleRow = worksheet.addRow(['Asignatura: ', 'xxx', 'Curso: ', 'xxx', 'Código Curso:', 'xxx']);
         /*
         // Add column headers
@@ -105,9 +108,16 @@ const createExcelFile = async (file_path, response) => {
         ];
 
 
+        
         worksheet.addRows(rows);
         */
-        response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        // >
+
+        // > Rcorrer todo el worksheet y aplicar estilo usando objectAssifn
+        worksheet.getColumn(1).eachCell((cell, rowNumber) => {
+            cell.font = { name: 'Arial', family: 4, size: 16, bold: true };
+        })
+        response.setHeader('Content-Type', EXCEL_TYPE);
         response.setHeader("Content-Disposition", "attachment; filename=" + file_path);
 
         // save workbook to disk
