@@ -1,14 +1,10 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const PrettyError = require('pretty-error');
 const pe = new PrettyError();
 
-// ----------------------------------------
 // Init Pretty Error Configuration
-// ----------------------------------------
 (() => {
     pe.skipNodeFiles();
     pe.skipPackage('express');
@@ -16,9 +12,7 @@ const pe = new PrettyError();
     pe.skipPath('bootstrap_node.js')
 })()
 
-// ----------------------------------------
 // Clean Stack Trace
-// ----------------------------------------
 function cleanStack(stack) {
     return stack.split(/\n/)
         .map(stackTrace => stackTrace.replace(/\s{2,}/g, ' ').trim())
@@ -45,9 +39,7 @@ function handler(error, req, res, next) {
     });
 }
 
-// ----------------------------------------
 // Export Modules
-// ----------------------------------------
 module.exports = {
     logErrors,
     handler

@@ -1,10 +1,7 @@
 'use strict'
 
-// ----------------------------------------
-// Load Modules
-// ----------------------------------------
+// Load modules
 const check = require('express-validator/check').check;
-
 
 const login = [
     check('email')
@@ -16,9 +13,6 @@ const login = [
     .isLength({min: 4, max:4}).withMessage('Semester must be at least 4 numbers.'),
 ];
 
-// ----------------------------------------
-// Export Modules
-// ----------------------------------------
 module.exports = {
     login
 }
