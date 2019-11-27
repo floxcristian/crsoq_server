@@ -3,7 +3,7 @@
 // Load modules
 const pool = require("../database");
 
-// Get
+// Obteniene la puntuación de estudiantes por curso
 const courseStudentPoints = async (req, res, next) => {
   try {
     const { id_course } = req.params;
@@ -28,8 +28,6 @@ const courseStudentPoints = async (req, res, next) => {
     const values = [id_course];
     const { rows } = await pool.query(text, values);
 */
-
-    // Obtiene array de clases
 
     const text = `
     SELECT u.id_user, u.document, u.name, u.last_name, u.middle_name, t3.question_points, t3.activity_points

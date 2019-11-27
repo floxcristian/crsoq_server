@@ -44,32 +44,78 @@ const BORDER_PROPERTIES = {
 };
 
 
-// Obtiene todos los colores
+
 const genWorkbook = async (req, res, next) => {
     try {
         const { id_course } = req.params; //id_course, name
         console.log("[genWorkbook] id_course: ", id_course);
 
-        res = await createExcelFile("sample.xlsx", res);
+        const text = `
+    SELECT u.document, u.name, u.last_name, u.middle_name, t3.question_points, t3.activity_points
+    FROM course_user AS cu
+    INNER JOIN users AS u
+    ON cu.id_user = u.id_user
+    INNER JOIN (
+      SELECT 
+      CASE WHEN (t1.id_user > 0) THEN t1.id_user ELSE t2.id_user END AS id_user,
+      CASE WHEN (t1.question_points > 0) THEN t1.question_points ELSE '0' END AS question_points,
+      CASE WHEN (t2.activity_points > 0) THEN t2.activity_points ELSE '0' END AS activity_points
+      FROM ( 
+        SELECT uqc.id_user, count(uqc.id_user) AS question_points
+        FROM modules AS m
+        INNER JOIN classes AS c
+        ON m.id_module = c.id_module
+        INNER JOIN class_question AS cq
+        ON c.id_class = cq.id_class
+        INNER JOIN user_question_class AS uqc
+        ON (cq.id_class = uqc.id_class AND cq.id_question = uqc.id_question)
+        WHERE m.id_course = $1
+        AND cq.status = 5
+        AND uqc.status = 5
+        GROUP BY uqc.id_user
+      ) AS t1
+      FULL JOIN (
+        SELECT au.id_user, count(au.id_user) AS activity_points
+        FROM modules AS m
+        INNER JOIN classes AS c
+        ON m.id_module = c.id_module
+        INNER JOIN activities AS a
+        ON c.id_class = a.id_class
+        INNER JOIN activity_user AS au
+        ON a.id_activity = au.id_activity
+        WHERE m.id_course = $1
+        AND a.status = 2
+        AND au.status = 2
+        GROUP BY au.id_user
+      ) AS t2
+      ON t1.id_user = t2.id_user
+    ) AS t3
+    ON u.id_user = t3.id_user
+    WHERE cu.id_course = $1
+    AND u.active = TRUE`;
+        const values = [id_course];
+        const { rows } = await pool.query(text, values);
 
-        setTimeout(() => {
-            console.log("res: ", res);
-        }, 5000);
+        rows.forEach(item => {
+            item.question_points = parseInt(item.question_points);
+            item.activity_points = parseInt(item.activity_points);
+            item.total = item.question_points + item.activity_points;
+        });
 
-        /*const text = `
-                    SELECT id_color, name, hexadecimal 
-                    FROM colors 
-                    ORDER BY name ASC`;
-                const {
-                    rows
-                } = await pool.query(text);*/
+        console.log("mario: ", rows);
+
+        //res.json(rows);
+
+
+        res = await createExcelFile(rows, res);
+
         //res.send()
     } catch (error) {
         next({ error });
     }
 };
 
-const createExcelFile = async (req, response, next) => {
+const createExcelFile = async (data, response) => {
     try {
         let file_name = "sample.xlsx";
         // Create workbook
@@ -77,7 +123,7 @@ const createExcelFile = async (req, response, next) => {
         // Set workbook properties (https://github.com/exceljs/exceljs#set-workbook-properties)
         workbook.creator = "RuviClass";
         workbook.created = new Date();
-
+        console.log("DATA QLO: ", data);
         // Add a worksheet
         const worksheet = workbook.addWorksheet("points_per_student", WS_OPTIONS);
 
@@ -85,7 +131,7 @@ const createExcelFile = async (req, response, next) => {
         worksheet.headerFooter.oddFooter = "&B&ICRSOQ";
 
         // Add title row
-        worksheet.addRow(["title"]);
+        worksheet.addRow(["Puntuación de Estudiantes"]);
         // Fix: Put 'background color' and 'border color' on 'title'
         /*
             titleRow.font = { name: "Arial", family: 4, size: 16, bold: true };
@@ -108,6 +154,7 @@ const createExcelFile = async (req, response, next) => {
         };
         //title.border = BORDER_PROPERTIES;
 
+        // Establece bordes a todas las celdas  
         ['A1', 'A2', 'B2', 'B3', 'C2', 'C3', 'D2', 'D3', 'E2', 'E3', 'F2', 'E3'].map(key => {
             worksheet.getCell(key).border = BORDER_PROPERTIES
         });
@@ -117,10 +164,11 @@ const createExcelFile = async (req, response, next) => {
         worksheet.addRow([3, "Sam", new Date()]); //dd-mm-yyyy h:mm
         worksheet.getCell("C3").numFmt = 'dd/mm/yyyy\\ h:mm:ss';
         //expect(cell.type).toEqual(Excel.ValueType.Date);
-        // Add blank Row
-        worksheet.addRow([], []);
+        // Añade dos saltos de línea
         worksheet.addRow([]);
-        // Add table
+        worksheet.addRow([]);
+
+        // Añade una tabla
         worksheet.addTable({
             name: "MyTable",
             ref: "A4",
@@ -132,26 +180,23 @@ const createExcelFile = async (req, response, next) => {
             },
             columns: [
                 { name: "#" },
-                { name: "Date", totalsRowLabel: "Totals:", filterButton: true },
-                { name: "Nombre", totalsRowFunction: "sum", filterButton: false }
+                { name: "Nombre", totalsRowLabel: "Totals:", filterButton: true },
+                { name: "Rut", filterButton: false },
+                { name: "Pts. por Pregunta", totalsRowFunction: "sum", filterButton: true },
+                { name: "Pts. por Actividad", totalsRowFunction: "sum", filterButton: true },
+                { name: "Total", totalsRowFunction: "sum", filterButton: true }
             ],
-            rows: [[1, 70.1], [5, 70.6], [1, 70.1]]
+            rows: gege(data)
         });
 
         /*
-            worksheet.getColumn()
+          
             worksheet.eachRow((row, rowNumber) => {
                 console.log('Row ' + rowNumber + ' = ' + JSON.stringify(row.values));
               });
             */
 
-        // Add an array of rows
-        // Add row using key mapping to columns
-        worksheet.addRow(
-            ["FGH", "Author Name 4"], // OK
-            { package_name: "XYZ", author_name: "Author 2" } // NO: Por qué no funciona el key mapping
-        );
-
+ 
         //Add row with current date
         // Fix: put 'bold: true' on 'Asignatura', 'Curso' and 'Código Curso'.
         //let subTitleRow = worksheet.addRow({id: 1, name: 'John Doe', dob: new Date(1970,1,1)});
@@ -161,6 +206,22 @@ const createExcelFile = async (req, response, next) => {
             size: 12,
             bold: true
         };
+
+        // Obtiene las columnas utilizadas
+        let col_a = worksheet.getColumn('A');
+        let col_b = worksheet.getColumn('B');
+        let col_c = worksheet.getColumn('C');
+        let col_d = worksheet.getColumn('D');
+        let col_e = worksheet.getColumn('E');
+        let col_f = worksheet.getColumn('F');
+
+        // Establece propiedades de cada columna
+        col_a = Object.assign(col_a, { width: 10, alignment: { horizontal: 'center'}});
+        col_b = Object.assign(col_b, { width: 30, alignment: { horizontal: 'left'}});
+        col_c = Object.assign(col_c, { width: 50, alignment: { horizontal: 'left'}});
+        col_d = Object.assign(col_d, { width: 25, alignment: { horizontal: 'center'}});
+        col_e = Object.assign(col_e, { width: 25, alignment: { horizontal: 'center'}});
+        col_f = Object.assign(col_f, { width: 15, alignment: { horizontal: 'center'}});
 
         response.setHeader(
             "Content-Type",
@@ -174,13 +235,25 @@ const createExcelFile = async (req, response, next) => {
         // save workbook to disk
         await workbook.xlsx.write(response);
         //return response;
-        next();
+
         //response.send();
     } catch (error) {
         console.log("errorcito: ", error);
     }
 };
 
+
+const gege = (data) => {
+
+    let result = [];
+
+    data.forEach((item, index) => {
+        const { name, last_name, middle_name, document, question_points, activity_points, total} = item;
+        result.push([index + 1, `${name} ${last_name} ${middle_name}`, document, question_points, activity_points, total])
+    });
+    console.log("result: ", result);
+    return result;
+}
 const formatTitleCell = () => { };
 
 module.exports = {
