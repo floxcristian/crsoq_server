@@ -106,7 +106,6 @@ const genWorkbook = async (req, res, next) => {
 
         //res.json(rows);
 
-
         res = await createExcelFile(rows, res);
 
         //res.send()
@@ -123,7 +122,6 @@ const createExcelFile = async (data, response) => {
         // Set workbook properties (https://github.com/exceljs/exceljs#set-workbook-properties)
         workbook.creator = "RuviClass";
         workbook.created = new Date();
-        console.log("DATA QLO: ", data);
         // Add a worksheet
         const worksheet = workbook.addWorksheet("points_per_student", WS_OPTIONS);
 
@@ -133,43 +131,53 @@ const createExcelFile = async (data, response) => {
         // Add title row
         worksheet.addRow(["Puntuación de Estudiantes"]);
         // Fix: Put 'background color' and 'border color' on 'title'
-        /*
-            titleRow.font = { name: "Arial", family: 4, size: 16, bold: true };
-            */
         worksheet.mergeCells("A1:F1");
-        let title = worksheet.getCell("A1");
+        worksheet.mergeCells("A2:F2");
+        //worksheet.mergeCells("A6:F6");
+        let title = worksheet.getCell('A1');
 
         title.alignment = {
             vertical: "middle",
             horizontal: "center"
         };
         title.font = {
-            size: 16,
+            size: 11,
             bold: true
         };
-        title.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "8268A6" } // hex string for argb
-        };
-        //title.border = BORDER_PROPERTIES;
 
-        // Establece bordes a todas las celdas  
-        ['A1', 'A2', 'B2', 'B3', 'C2', 'C3', 'D2', 'D3', 'E2', 'E3', 'F2', 'E3'].map(key => {
-            worksheet.getCell(key).border = BORDER_PROPERTIES
+        worksheet.addRow(['Asignatura', '---', 'Curso', '---', 'Código', '---']); //dd-mm-yyyy h:mm
+
+        // Establece bordes a las siguientes celdas
+        ['A1', 'A2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3'].map(key => {
+            worksheet.getCell(key).border = BORDER_PROPERTIES;
         });
 
+        // Setea las siguientes celdas
+        ['A1', 'A3', 'C3', 'E3'].map(key => {
+            worksheet.getCell(key).fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "8268A6" } // hex string for argb
+            }
+        });
 
-        // Add a row by contiguous Array (assign to columns A, B & C)
-        worksheet.addRow([3, "Sam", new Date()]); //dd-mm-yyyy h:mm
-        worksheet.getCell("C3").numFmt = 'dd/mm/yyyy\\ h:mm:ss';
-        //expect(cell.type).toEqual(Excel.ValueType.Date);
+        // Setea las siguientes celdas
+        ['A2'].map(key => {
+            worksheet.getCell(key).fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "E4DFEC" }
+            }
+        });
+
+        // worksheet.getCell('C3').numFmt = 'dd/mm/yyyy\\ h:mm:ss';
         // Añade dos saltos de línea
-        worksheet.addRow([]);
+        //worksheet.addRow([]);
+        
         worksheet.addRow([]);
 
         // Añade una tabla
-        worksheet.addTable({
+        /*worksheet.addTable({
             name: "MyTable",
             ref: "A4",
             headerRow: true,
@@ -188,15 +196,8 @@ const createExcelFile = async (data, response) => {
             ],
             rows: gege(data)
         });
+/*
 
-        /*
-          
-            worksheet.eachRow((row, rowNumber) => {
-                console.log('Row ' + rowNumber + ' = ' + JSON.stringify(row.values));
-              });
-            */
-
- 
         //Add row with current date
         // Fix: put 'bold: true' on 'Asignatura', 'Curso' and 'Código Curso'.
         //let subTitleRow = worksheet.addRow({id: 1, name: 'John Doe', dob: new Date(1970,1,1)});
@@ -216,12 +217,14 @@ const createExcelFile = async (data, response) => {
         let col_f = worksheet.getColumn('F');
 
         // Establece propiedades de cada columna
-        col_a = Object.assign(col_a, { width: 10, alignment: { horizontal: 'center'}});
-        col_b = Object.assign(col_b, { width: 30, alignment: { horizontal: 'left'}});
-        col_c = Object.assign(col_c, { width: 50, alignment: { horizontal: 'left'}});
-        col_d = Object.assign(col_d, { width: 25, alignment: { horizontal: 'center'}});
-        col_e = Object.assign(col_e, { width: 25, alignment: { horizontal: 'center'}});
-        col_f = Object.assign(col_f, { width: 15, alignment: { horizontal: 'center'}});
+        col_a = Object.assign(col_a, { width: 25, alignment: { horizontal: 'center' } });
+        col_b = Object.assign(col_b, { width: 35, alignment: { horizontal: 'left' } });
+        col_c = Object.assign(col_c, { width: 35, alignment: { horizontal: 'left' } });
+        col_d = Object.assign(col_d, { width: 25, alignment: { horizontal: 'center' } });
+        col_e = Object.assign(col_e, { width: 25, alignment: { horizontal: 'center' } });
+        col_f = Object.assign(col_f, { width: 25, alignment: { horizontal: 'center' } });
+        */
+        worksheet.addRow([3, "Sam", new Date()]); //dd-mm-yyyy h:mm
 
         response.setHeader(
             "Content-Type",
@@ -248,7 +251,7 @@ const gege = (data) => {
     let result = [];
 
     data.forEach((item, index) => {
-        const { name, last_name, middle_name, document, question_points, activity_points, total} = item;
+        const { name, last_name, middle_name, document, question_points, activity_points, total } = item;
         result.push([index + 1, `${name} ${last_name} ${middle_name}`, document, question_points, activity_points, total])
     });
     console.log("result: ", result);
