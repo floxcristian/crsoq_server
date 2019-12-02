@@ -48,7 +48,7 @@ app
     .use('/activity_participation', activityParticipation)
     .use('/statistics', statistics)
     .use('/uploads', images)
-    .use('/files', files);
+    .use('/files', files)
 
 // Server Status
 app.get('/status', (req, res) => res.send('OK'));

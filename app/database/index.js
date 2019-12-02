@@ -102,7 +102,7 @@ async function transaction(q) {
     console.log(`${colors.green.bold('[SUCCESS]'.padStart(10))} database is running on ${res.client_addr}:${port}`);
   } catch (error) {
     console.log(`${colors.red.bold('[ERROR]'.padStart(10))} database is not running on ${host}:${port}`);
-    process.exit(-1); // Cierra la aplicación
+    //process.exit(-1); // Cierra la aplicación
     //console.log(error)
   }
 })();

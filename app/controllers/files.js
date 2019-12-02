@@ -49,7 +49,7 @@ const genWorkbook = async (req, res, next) => {
     try {
         const { id_course } = req.params; //id_course, name
         console.log("[genWorkbook] id_course: ", id_course);
-
+/*
         const text = `
     SELECT u.document, u.name, u.last_name, u.middle_name, t3.question_points, t3.activity_points
     FROM course_user AS cu
@@ -105,7 +105,10 @@ const genWorkbook = async (req, res, next) => {
         console.log("mario: ", rows);
 
         //res.json(rows);
+*/
 
+
+let rows = [];
         res = await createExcelFile(rows, res);
 
         //res.send()
@@ -128,12 +131,19 @@ const createExcelFile = async (data, response) => {
         // Set workbook properties for print
         worksheet.headerFooter.oddFooter = "&B&ICRSOQ";
 
-        // Add title row
+        // Content rows
         worksheet.addRow(["Puntuación de Estudiantes"]);
+        worksheet.addRow([]);
+        worksheet.addRow(['Asignatura', '---', 'Curso', '---', 'Código', '---']); //dd-mm-yyyy h:mm
+        worksheet.addRow(['Ax1', '---', 'Ax2', '---']); //dd-mm-yyyy h:mm
+        worksheet.addRow(['Ay1', '---', 'Ay2', '---']); //dd-mm-yyyy h:mm
+        worksheet.addRow([]);
+
         // Fix: Put 'background color' and 'border color' on 'title'
         worksheet.mergeCells("A1:F1");
         worksheet.mergeCells("A2:F2");
-        //worksheet.mergeCells("A6:F6");
+        worksheet.mergeCells("A6:F6");
+
         let title = worksheet.getCell('A1');
 
         title.alignment = {
@@ -141,28 +151,33 @@ const createExcelFile = async (data, response) => {
             horizontal: "center"
         };
         title.font = {
-            size: 11,
+            size: 12,
             bold: true
         };
 
-        worksheet.addRow(['Asignatura', '---', 'Curso', '---', 'Código', '---']); //dd-mm-yyyy h:mm
-
         // Establece bordes a las siguientes celdas
-        ['A1', 'A2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3'].map(key => {
+        ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5', 'C3', 'C4', 'C5', 'D3', 'D4', 'D5', 'E3', 'E4', 'E5', 'F3', 'F4', 'F5'].map(key => {
             worksheet.getCell(key).border = BORDER_PROPERTIES;
         });
 
-        // Setea las siguientes celdas
-        ['A1', 'A3', 'C3', 'E3'].map(key => {
+        const TITLE_CELLS = ['A1', 'A3', 'C3', 'E3', 'A4', 'C4', 'A5', 'C5']; 
+        const NOTITLE_CELLS = [];
+        // Setea las celdas de título
+        TITLE_CELLS.map(key => {
+            //> Ponerle color de texto
             worksheet.getCell(key).fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "8268A6" } // hex string for argb
-            }
+                fgColor: { argb: "8268A6" }
+            };
+            worksheet.getCell(key).font = {
+                color: { argb: "ffffff" },
+                bold: true
+            };
         });
 
-        // Setea las siguientes celdas
-        ['A2'].map(key => {
+        // Setea las celdas de separación
+        ['A2', 'A6'].map(key => {
             worksheet.getCell(key).fill = {
                 type: "pattern",
                 pattern: "solid",
@@ -171,10 +186,6 @@ const createExcelFile = async (data, response) => {
         });
 
         // worksheet.getCell('C3').numFmt = 'dd/mm/yyyy\\ h:mm:ss';
-        // Añade dos saltos de línea
-        //worksheet.addRow([]);
-        
-        worksheet.addRow([]);
 
         // Añade una tabla
         /*worksheet.addTable({
