@@ -49,9 +49,9 @@ const database = {
     'development': {
         user: 'postgres', 
         host: 'localhost', 
-        database: 'crsoq_db', 
-        password: '0812', 
-        port: 5432
+        database: 'crsoq_test', 
+        password: 'postgres', 
+        port: 5488
     }
 };
 

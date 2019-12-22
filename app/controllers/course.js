@@ -33,7 +33,7 @@ const getLatestUpdatedCourses = async (req, res, next) => {
 */
         //> Obtener la cantidad de preguntas realizadas en el curso
         //const id_courses = rows.map(course => course.id_course);
-        //console.log("id_courses: ", id_courses);
+
         //> SELECT con múltiples valores
         // https://stackoverflow.com/questions/10720420/node-postgres-how-to-execute-where-col-in-dynamic-value-list-query
         //> cantidad de preguntas hechas por cada curso

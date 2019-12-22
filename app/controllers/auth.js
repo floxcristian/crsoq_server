@@ -21,6 +21,139 @@ function rejectRefreshToken(req, res, next) {
 
 }
 
+const registerUser = async (req, res, next) => {
+
+    const client = await pool.pool.connect();
+  
+    try {
+      const {
+        name,
+        last_name,
+        middle_name,
+        document,
+        email,
+        phone,
+        username,
+        password,
+        roles = [1]
+      } = req.body;
+  
+      if (
+        name &&
+        last_name &&
+        middle_name &&
+        document &&
+        email &&
+        phone &&
+        username &&
+        password &&
+        roles
+      ) {
+        //COMPRUEBO QUE EL RUT,USERNAME E EMAIL NO EXISTAN  EN LA BASE DE DATOS user.rut.toLowerCase()
+  
+        if (roles.length == 0) {
+          return res.status(400).send({
+            message: "Debe enviar al menos un rol dentrol del array de roles."
+          });
+        }
+  
+        const result_search = await Promise.all([
+          pool.query("SELECT id_user FROM users WHERE document = $1", [document]),
+          pool.query("SELECT id_user FROM users WHERE username = $1", [username]),
+          pool.query("SELECT id_user FROM users WHERE email = $1", [email])
+        ]);
+  
+        const rows_document = result_search[0].rows;
+        const rows_username = result_search[1].rows;
+        const rows_email = result_search[2].rows;
+        let combination = `${rows_document.length}${rows_username.length}${rows_email.length}`;
+  
+        switch (combination) {
+          case "111":
+            return res.status(500).json({
+              status: "111",
+              message: `this document, username and email has been taken`
+            });
+          case "110":
+            return res.status(500).json({
+              status: "110",
+              message: `this document and username has been taken`
+            });
+          case "101":
+            return res.status(500).json({
+              status: "101",
+              message: `this document and email has been taken`
+            });
+          case "011":
+            return res.status(500).json({
+              status: "011",
+              message: `this username and email has been taken`
+            });
+          case "100":
+            return res.status(500).json({
+              status: "100",
+              message: `this document has been taken`
+            });
+          case "010":
+            return res.status(500).json({
+              status: "010",
+              message: `this username has been taken`
+            });
+          case "001":
+            return res.status(500).json({
+              status: "001",
+              message: `this email has been taken`
+            });
+          default:
+            let salt = bcrypt.genSaltSync(10); // Hashea la password
+            //INICIA LA TRANSACCIÓN
+            client.query("BEGIN");
+  
+            // Inserta al usuario
+            const text1 = `
+              INSERT INTO users(name, last_name, middle_name, document, email, phone, username, password) 
+              VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
+              RETURNING id_user, name, last_name, middle_name, document, email, phone, username, password, active, profile_image, created_at, updated_at`;
+            const values1 = [
+              name,
+              last_name,
+              middle_name,
+              document,
+              email,
+              phone,
+              username,
+              bcrypt.hashSync(password, salt)
+            ];
+            const user = (await client.query(text1, values1)).rows[0];
+  
+            //INSERCIÓN DE ROL
+            const { text, values } = insertRoles(roles, user.id_user);
+            await client.query(text, values);
+  
+            await client.query("COMMIT"); // Finaliza la transacción
+  
+            //const roles = await pool.query('INSERT INTO roles(id_user, role) VALUES($1, $2)', [rows[0].id_user, '3']);
+            //GENERO EL TOKEN CON DATOS DE USUARIO Y ROLES
+            res.json({
+              message: "successfully created user",
+              user
+            });
+        }
+      } else {
+        await client.query("ROLLBACK");
+        res.status(400).send({
+          message: "send all necessary fields"
+        });
+      }
+    } catch (error) {
+      next({
+        error
+      });
+    } finally {
+      client.release();
+    }
+  };
+
 const login = async (req, res, next) => {
     try {
 
@@ -116,7 +249,7 @@ const updateSession = async (req, res, next) => {
 // Recibe el 'refresh token' y el 'email'
 // 'An email is required to generate an access token.'
 const renewToken = async (req, res, next) => {
-    
+
     try {
 
         const {
@@ -235,7 +368,7 @@ const generateRefreshToken2 = (id_client) => {
  * Retorna 'true' o 'false' de acuerdo a si las passwords coinciden.
  * @private
  */
-async function passwordMatches(valid_password, password) {
+const passwordMatches = async (valid_password, password) => {
     return bcrypt.compareSync(valid_password, password);
 }
 
@@ -287,5 +420,6 @@ function updateRefreshToken(refresh_token, email) {
 module.exports = {
     login,
     updateSession,
-    renewToken
+    renewToken,
+    //register
 }

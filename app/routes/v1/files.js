@@ -7,6 +7,6 @@ const { filesCtrl } = require('../../controllers');
 var api = express.Router();
 
 // Routes and controllers
-api.get('/spreadsheet/:id_course', filesCtrl.genWorkbook)
+api.get('/spreadsheet/:id_course', filesCtrl.genExcel)
 
 module.exports = api;

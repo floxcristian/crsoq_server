@@ -13,6 +13,7 @@ var api = express.Router();
 //api.post('/login', validation.login, validate.checkResult, authController.login);
 api
   .post("/login", validation.login, authCtrl.login)
+  //.post("/register", validation.login, authCtrl.register)
   .post("/update_session", checkToken, authCtrl.updateSession)
   .post("/renew_token", checkToken, authCtrl.renewToken)
 //api.post('/reject_refresh_token', authController)

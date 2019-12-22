@@ -44,7 +44,7 @@ const updateWorkspaces = async (req, res, next) => {
             add_workspaces,
             delete_workspaces
         } = req.body;
-        
+
         client.query('BEGIN'); // Inicia la transacción
         let promises = []; // Array para ejecutar consultas en paralelo
 
@@ -78,42 +78,140 @@ const updateWorkspaces = async (req, res, next) => {
 
         if (delete_workspaces && delete_workspaces.length > 0) {
 
-            // OPC1: Antes verificar si hay categorías aparte de la DEFAULT en cada uno de los SUBJECTS
-            // OPC2: Antes verificar si hay cursos en los workspaces
+            // OPC1: Antes, verificar si hay categorías aparte de la DEFAULT en cada uno de los SUBJECTS
+            // OPC2: Antes, verificar si hay cursos en los workspaces
             // NOTA: En 'delete_workspaces' estan los 'id_subject'
 
-           /* Para obtener las categorías y subcategorías pero solo de un workspace:
+            let promises3= [];
+            // Obtener cursos del profesor de las asignaturas que se quieren eliminar (input: array de id_subject)
             const text1 = `
-                SELECT id_category 
-                FROM categories 
-                WHERE id_user = $1 
-                AND id_subject = $2`;
-            const values1 = [id_user, id_subject];
-            await client.query(text1, values1);
-            */
+                SELECT count(*) AS n_courses
+                FROM courses AS c
+                WHERE c.id_user = $1 
+                AND c.id_subject = ANY($2::int[])`;
+            const values1 = [id_user, delete_workspaces];
+            promises3.push(client.query(text1, values1));
 
-            // Necesito un SELECT en paralelo que devuelva un array de resultados
-            // [true, false, true, true] si hay cursos, categorías, etc
-            
-            /* 
-            SELECT id_subject, 
-            CASE WHEN EXISTS (
-                SELECT id_user 
-                FROM activity_user AS au 
-                WHERE id_activity = a.id_activity 
-                AND status = 2
-            ) THEN TRUE ELSE FALSE END AS winners 
-            */
+            const text2 = `
+                    SELECT count(*) AS n_questions
+                    FROM questions AS q
+                    INNER JOIN subcategories AS s
+                    ON q.id_subcategory = s.id_subcategory
+                    INNER JOIN categories AS c
+                    ON s.id_category = c.id_category
+                    WHERE c.id_user = $1
+                    AND c.id_subject = ANY($2::int[])`;
+            const values2 = [id_user, delete_workspaces];
+            promises3.push(client.query(text2, values2));
+
+
+            const results = await Promise.all(promises3);
+
+            const n_courses = parseInt(results[0].rows[0].n_courses);
+            const n_questions = parseInt(results[1].rows[0].n_questions);
+            console.log("n_courses: ", n_courses);
+            console.log("n_questions: ", n_questions);
+
+            if (n_courses > 0 || n_questions > 0) { // Mensaje no se puede eliminar porque hay cursos
+                console.log("no se puede eliminar porque tiene cursos o preguntas");
+                return res.status(500).send();
+            }
+            else { // No hay cursos pero se deben verificar otras cosas?
+                // Obtener preguntas de cada asignatura a eliminar
+                console.log("vamos a ver si se crearon categorías o subcategorías...");
+
+                let promises2 = [];
+
+                // Obtener categorías
+                const text1 = `
+                    SELECT c.id_subject, c.id_category, c.name AS category
+                    FROM categories AS c
+                    WHERE c.id_user = $1 
+                    AND c.id_subject = ANY($2::int[])`;
+                const values1 = [id_user, delete_workspaces];
+                promises2.push(client.query(text1, values1));
+
+                // Obtener subcategorías
+                const text2 = `
+                    SELECT c.id_subject, c.id_category, c.name AS category, s.id_subcategory, s.name AS subcategory
+                    FROM categories AS c
+                    INNER JOIN subcategories AS s
+                    ON c.id_category = s.id_category
+                    WHERE c.id_user = $1 
+                    AND c.id_subject = ANY($2::int[])`;
+                const values2 = [id_user, delete_workspaces];
+                promises2.push(client.query(text2, values2));
+
+                const results = await Promise.all(promises2);
+                const categories = results[0].rows;
+                const subcategories = results[1].rows;
+                console.log("categories: ", categories);
+                console.log("subcategories: ", subcategories);
+
+                /// Formatear array de ids
+                let f_categories = [];
+                categories.forEach(category => f_categories.push(parseInt(category.id_category)));
+                let f_subcategories = [];
+                subcategories.forEach(subcategory => f_subcategories.push(parseInt(subcategory.id_subcategory)));
+
+                console.log("f_categories: ", f_categories);
+                console.log("f_subcategories: ", f_subcategories);
+
+                /*
+                let categories_by_subject = groupByCategory(categories);
+
+                let error_n_categories = false;
+                // Agrupar categorías y subcategorías por asignatura
+                categories_by_subject.forEach(subject => {
+                    //console.log("subject: ", subject);
+                    if(subject.n_categories > 1) error_n_categories = true;
+                });
+                console.log("error: ", error_n_categories);
+                if(error_n_categories) return res.status(500).send();
+                
+                let subcategories_by_category;
+                console.log("paso.....");
+                
+                // Elimino todas las subcategorias y categorias
+
+
+                //> Si hay solo una categoría y subcategoría
+                let promises3 = [];*/
+
+                // Elimina todas las subcategorías de las asignturas seleccionadas por el profesor
+                const textn = `
+                    DELETE FROM subcategories   
+                    WHERE (id_subcategory) 
+                    IN (SELECT * FROM UNNEST ($1::int[]))`;
+                const valuesn = [f_subcategories];
+                await pool.query(textn, valuesn);
+
+                // Elimina todas las categorías de las asignturas seleccionadas por el profesor
+                const textm = `
+                    DELETE FROM categories   
+                    WHERE (id_category) 
+                    IN (SELECT * FROM UNNEST ($1::int[]))`;
+                const valuesm = [f_categories];
+                await pool.query(textm, valuesm);
+
+                // Eliminar asignaturas...
+                console.log("ELIMIANDO LA WA...")
+                console.log("delete_workspaces: ", delete_workspaces);
+                console.log("id_user: ", id_user);
+                const {text, values} = deleteWorkspaces(delete_workspaces, id_user);
+              
+                //console.log(`texth: ${texth}, valuesh: ${valuesh}`);
+                promises.push(client.query(text, values)); // Agrega la query al array 'promises'*/
+                
+                //console.log("DELETIANDO: ", results);
+            }
+         
+            await Promise.all(promises3);
             console.log("DELETE WORKSPACES...");
-            const {
-                text,
-                values
-            } = deleteWorkspaces(delete_workspaces, id_user);
-            promises.push(client.query(text, values)); // Agrega la query al array 'promises'
         }
 
-        await Promise.all(promises);
 
+        await Promise.all(promises);
         await client.query('COMMIT'); // Finaliza la transacción
 
         res.json({});
@@ -127,6 +225,21 @@ const updateWorkspaces = async (req, res, next) => {
         client.release();
     }
 }
+
+const groupByCategory = (array) => {
+    const group_to_values = array.reduce((obj, item) => {
+        obj[item.id_subject] = obj[item.id_subject] || [];
+        obj[item.id_subject].push({ id_category: item.id_category, category: item.category });
+        return obj;
+    }, {});
+
+    const groups = Object.keys(group_to_values).map((id_subject) => {
+        return { id_subject: id_subject, n_categories: group_to_values[id_subject].length, categories: group_to_values[id_subject] };
+    });
+
+    console.log("lalo: ", JSON.stringify(groups));
+    return groups;
+};
 
 const insertWorkspaces = (array_workspaces, id_user) => {
     const text = `
@@ -221,17 +334,15 @@ async function deleteCategory(req, res, next) {
 }
 
 // Enviar solo los workspaces que no tienen categorias y subcatecogias diferentes a DEFAULT
-const deleteWorkspaces = async (array_workspaces, id_user) => {
+const deleteWorkspaces = (array_workspaces, id_user) => {
 
     // Eliminar las categorias y subcategorias por DEFAULT
-    const text2 = `
-    `;
-
     const text = `
         DELETE FROM user_subject 
         WHERE (id_user, id_subject) 
         IN (SELECT * FROM UNNEST ($1::int[], $2::int2[]))`;
     const values = formatWorkspaceArray(array_workspaces, id_user);
+  
     return {
         text,
         values

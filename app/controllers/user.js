@@ -115,7 +115,7 @@ const getUsersStudents = async (req, res, next) => {
   }
 };
 
-// Crea un usuario
+// Crea un usuario. También registra usuario
 const createUser = async (req, res, next) => {
   const client = await pool.pool.connect();
 
@@ -130,7 +130,7 @@ const createUser = async (req, res, next) => {
       username,
       profile_image,
       password,
-      roles
+      roles = [3]
     } = req.body;
 
     if (
@@ -141,8 +141,7 @@ const createUser = async (req, res, next) => {
       email &&
       phone &&
       username &&
-      password &&
-      roles
+      password
     ) {
       //COMPRUEBO QUE EL RUT,USERNAME E EMAIL NO EXISTAN  EN LA BASE DE DATOS user.rut.toLowerCase()
 
@@ -500,7 +499,7 @@ function searchAnything(search_value, index) {
 const countUser = async (req, res, next) => {
   try {
     const text = `
-      SELECT count(*) AS count 
+      SELECT count(*)
       FROM users`;
     const { count } = (await pool.query(text)).rows[0];
     res.json({
