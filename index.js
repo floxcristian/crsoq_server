@@ -72,12 +72,14 @@ function initWebServer() {
             const server = await httpServer.listen(process.env.PORT);
             // Obtiene información del servidor
             const _address = server.address();
-            const {
+            console.log("_address: ", _address)
+            // Cannot destructure property `address` of 'undefined' or 'null'.
+            /*const {
                 address,
                 port
-            } = _address;
+            } = _address;*/
             //console.log(` ${colors.green.bold('[SUCCESS]')} webserver is running on ${address}${port}`);
-            console.log(` ${colors.green.bold('[SUCCESS]')} webserver is running on ${port}`);
+            console.log(` ${colors.green.bold('[SUCCESS]')} webserver is running on...`);
 
             io.on('connection', (socket) => { // id, 
                 num_connections++;
