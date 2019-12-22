@@ -76,7 +76,7 @@ function initWebServer() {
                 address,
                 port
             } = _address;
-            //console.log(` ${colors.green.bold('[SUCCESS]')} webserver is running on ${address}${port}`);
+            console.log(` ${colors.green.bold('[SUCCESS]')} webserver is running on ${address}${port}`);
 
             io.on('connection', (socket) => { // id, 
                 num_connections++;
