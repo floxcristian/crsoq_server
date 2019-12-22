@@ -39,7 +39,7 @@ const getLatestUpdatedCourses = async (req, res, next) => {
         //> cantidad de preguntas hechas por cada curso
         //> ultima actualización en question_class
         const query = `
-            SELECT s.id_subject, s.name AS subject, c.id_course, ca.year, ca.semester, c.name, c.course_goal, MAX(cq.updated_at) AS last_updated_question, count(*) AS total_asked_questions
+            SELECT s.id_subject, s.name AS subject, c.id_course, ca.year, ca.semester, c.name, c.course_goal, c.active, MAX(cq.updated_at) AS last_updated_question, count(*) AS total_asked_questions
             FROM courses AS c
             INNER JOIN subjects AS s 
             ON s.id_subject = c.id_subject
