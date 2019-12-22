@@ -70,9 +70,12 @@ function initWebServer() {
 
             // Inicia el servidor
             const server = await httpServer.listen(process.env.PORT);
+            console.log("server: ", server);
             // Obtiene información del servidor
             const _address = server.address();
-            console.log("_address: ", _address)
+            console.log("_address: ", _address);
+
+            // > No funciona en modo cluster:
             // Cannot destructure property `address` of 'undefined' or 'null'.
             /*const {
                 address,
