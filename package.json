@@ -21,7 +21,7 @@
     "http-errors": "^1.7.3",
     "imagemin": "^6.0.0",
     "jsonwebtoken": "^8.3.0",
-    "moment": "^2.22.2",
+    "moment": "^2.29.4",
     "multer": "^1.4.1",
     "pg": "^7.4.3",
     "socket.io": "^2.1.1",
